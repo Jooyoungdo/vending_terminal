@@ -10,7 +10,11 @@ camera::camera(){
     video_device.push_back(0);
 
     cv::VideoCapture _cap;
+#ifdef OLD_OPENCV
+    _cap.open("/dev/video0", CV_CAP_V4L);
+#else
     _cap.open("/dev/video0", cv::CAP_V4L);
+#endif
 
     caps.push_back(_cap);
 }
@@ -25,9 +29,11 @@ camera::camera(std::string mode, char* prefix_path, std::string regex_grammer) {
         video_device.push_back(0);
 
         cv::VideoCapture _cap;
+#ifdef OLD_OPENCV
+        _cap.open("/dev/video0", CV_CAP_V4L);
+#else
         _cap.open("/dev/video0", cv::CAP_V4L);
-
-
+#endif
         caps.push_back(_cap);
     }
     else {
@@ -45,7 +51,11 @@ camera::camera(std::string mode, char* prefix_path, std::string regex_grammer) {
                 video_device.push_back(std::stoi(match[1].str()));
                 //cv::VideoCapture _cap(prefix_path + match.str(), cv::CAP_V4L);
 //                _cap.open(());
+#ifdef OLD_OPENCV
+                caps.emplace_back(cv::VideoCapture(prefix_path + match.str(), CV_CAP_V4L));
+#else
                 caps.emplace_back(cv::VideoCapture(prefix_path + match.str(), cv::CAP_V4L));
+#endif
 
             }
         }
@@ -72,9 +82,13 @@ bool camera::grab_frame() {
     try{
         std::vector<cv::VideoCapture>::iterator iter;
         for(iter = caps.begin(); iter != caps.end(); iter++){
+#ifdef OLD_OPEN_CV
+            iter->set(CV_CAP_PROP_FRAME_WIDTH, 1920);
+            iter->set(CV_CAP_PROP_FRAME_HEIGHT, 1080);
+#else
             iter->set(cv::CAP_PROP_FRAME_WIDTH, 1920);
             iter->set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
-
+#endif
             // for stable output quality, get 5 frames and use last one
             cv::Mat img;
             for(int i = 0; i<5; i++)

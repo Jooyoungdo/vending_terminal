@@ -11,3 +11,8 @@ target_link_libraries( daemon_process ${OpenCV_LIBS} ${PAHO_C_LIB} ${PAHO_CPP_LI
 
 add_definitions(-DOPENSSL)
 
+message("-- Opencv version ${OpenCV_VERSION}")
+if(OpenCV_VERSION VERSION_LESS "4")
+    message("-- Add OLD_OPENCV flag")
+    add_definitions(-DOLD_OPENCV)
+endif()
