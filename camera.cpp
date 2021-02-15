@@ -19,7 +19,7 @@ camera::camera(){
     caps.push_back(_cap);
 }
 
-camera::camera(std::string mode, char* prefix_path, std::string regex_grammer) {
+camera::camera(std::string mode, std::string prefix_path, std::string regex_grammer) {
 
     char* string_buffer;
     // if mode is not in auto detect, call default initializer
@@ -40,7 +40,7 @@ camera::camera(std::string mode, char* prefix_path, std::string regex_grammer) {
         std::regex re (regex_grammer.c_str());
         std::smatch match;
 
-        for (auto & entry : std::experimental::filesystem::directory_iterator(prefix_path)){
+        for (auto & entry : std::experimental::filesystem::directory_iterator(prefix_path.c_str())){
             std::string str = entry.path().string();
             if (std::regex_search(str, match, re, std::regex_constants::match_default)){
                 string_buffer = new char[50];
@@ -52,9 +52,9 @@ camera::camera(std::string mode, char* prefix_path, std::string regex_grammer) {
                 //cv::VideoCapture _cap(prefix_path + match.str(), cv::CAP_V4L);
 //                _cap.open(());
 #ifdef OLD_OPENCV
-                caps.emplace_back(cv::VideoCapture(prefix_path + match.str(), CV_CAP_V4L));
+                caps.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), CV_CAP_V4L));
 #else
-                caps.emplace_back(cv::VideoCapture(prefix_path + match.str(), cv::CAP_V4L));
+                caps.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), cv::CAP_V4L));
 #endif
 
             }
@@ -115,12 +115,12 @@ std::vector<cv::Mat> camera::get_frame(){
 }
 
 // save images in _PATH/image#.jpeg
-bool camera::save_frame(char* _PATH){
+bool camera::save_frame(std::string _PATH){
     int image_counter = 0;
     std::vector<cv::Mat>::iterator iter;
     char PATH[100];
     for (iter = images.begin(); iter!= images.end(); iter++){
-        sprintf(PATH, "%simage%d.jpeg", _PATH, image_counter++);
+        sprintf(PATH, "%simage%d.jpeg", _PATH.c_str(), image_counter++);
 
         try{
             cv::imwrite(PATH, *iter);
@@ -129,7 +129,7 @@ bool camera::save_frame(char* _PATH){
             return false;
         }
     }
-    log.print_log("SAVE IMAGE TO " + std::string(_PATH));
+    log.print_log("SAVE IMAGE TO " + _PATH);
     return true;
 }
 
