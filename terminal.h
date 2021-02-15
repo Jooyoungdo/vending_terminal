@@ -59,10 +59,14 @@ private:
     MYSQL_ROW row;
 
     // MYSQL options 
-    char *server = "192.168.10.69";
-    char *user = "root";
-    char *password = "return123";
-    char *database = "test";
+
+    // old mysql server
+    //char *server = "192.168.10.69";
+    // current mysql server
+    std::string server = "192.168.10.144";
+    std::string user = "root";
+    std::string password = "return123";
+    std::string database = "test";
 
     std::string event = "NONE";
     std::string event_payload = "NONE";
@@ -86,7 +90,7 @@ public:
     bool post_image(std::string json);
 
     // create json type response form
-    std::string create_response_form(std::string json, char* type, std::string stage, std::string msg, bool result);
+    std::string create_response_form(std::string json, std::string type, std::string stage, std::string msg, bool result);
 
     // upload image to database
     int64_t database_upload(cv::Mat iter, std::string env_id, std::string type);

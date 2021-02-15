@@ -158,14 +158,14 @@ void terminal::initialize_MySQL_connector() {
     bool reconnect = 1;
     mysql_options(conn, MYSQL_OPT_RECONNECT, &reconnect);
 
-    if(!mysql_real_connect(conn, server, user, password, NULL, 3306, NULL, 0)){
+    if(!mysql_real_connect(conn, server.c_str(), user.c_str(), password.c_str(), NULL, 3306, NULL, 0)){
         log.print_log("connect error.");
         exit(1);
     }
 
     log.print_log("mysql connect success");
 
-    if(mysql_select_db(conn, database) != 0){
+    if(mysql_select_db(conn, database.c_str()) != 0){
         mysql_close(conn);
         log.print_log("select db fail");
         exit(1);
@@ -181,7 +181,7 @@ void terminal::mqtt_publish(std::string payload) {
 
 
 // create response json form
-std::string terminal::create_response_form(std::string json, char* type, std::string stage, std::string msg, bool result){
+std::string terminal::create_response_form(std::string json, std::string type, std::string stage, std::string msg, bool result){
     rapidjson::Document return_form;
     return_form.SetObject();
 
@@ -191,18 +191,17 @@ std::string terminal::create_response_form(std::string json, char* type, std::st
     rapidjson::Document input_form;
     input_form.Parse(json.c_str());
 
-
     std::vector<std::string> json_members;
-    if (type == "image_upload"){
+    if (type.compare("image_upload") == 0){
         json_members.assign({"msg_id", "token", "operation_log_id", "type",
                              "stage", "msg", "ret_code",
                              "upload_duration", "timestamp"});
     }
-    else if (type == "door_open_close"){
+    else if (type.compare("door_open_close") == 0){
         json_members.assign({"msg_id", "operation_log_id", "type",
                              "token", "msg", "ret_code", "timestamp"});
     }
-    else if (type == "ack"){
+    else if (type.compare("ack") == 0){
         json_members.assign({"msg", "ret_code", "env_id"});
     }
     else
