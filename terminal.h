@@ -59,7 +59,11 @@ private:
     MYSQL_ROW row;
 
     // MYSQL options 
-    char *server = "192.168.10.69";
+
+    // old mysql server
+    //char *server = "192.168.10.69";
+    // current mysql server
+    char *server = "192.168.10.144";
     char *user = "root";
     char *password = "return123";
     char *database = "test";
