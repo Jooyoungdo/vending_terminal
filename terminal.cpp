@@ -44,6 +44,7 @@ bool terminal::post_image(std::string json) {
 //        curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: multipart/form-data");
+        headers = curl_slist_append(headers, "Expect:");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, noop_cb);
         curl_mime *mime;
