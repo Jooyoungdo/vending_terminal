@@ -205,6 +205,11 @@ std::string terminal::create_response_form(std::string json, std::string type, s
     else if (type.compare("ack") == 0){
         json_members.assign({"msg", "ret_code", "env_id"});
     }
+    else if (type.compare("camera_module_set_resp") == 0){
+        json_members.assign({"msg_id", "device_id", "request_id", "type",
+                             "msg", "ret_code",
+                             "timestamp"});
+    }
     else
         return NULL;
 
@@ -234,10 +239,12 @@ std::string terminal::create_response_form(std::string json, std::string type, s
             }
         }
     }
-    if (msg == "open_door"){
+    if (msg.find("open_door")>=0){
         return_form["type"] = "open_door_resp";
-    } else if (msg == "close_door") {
+    } else if (msg.find("close_door")>=0) {
         return_form["type"] = "close_door_resp";
+    }else if(msg.find("camera_module_set") >= 0){
+        return_form["type"] = "camera_module_set_resp";
     }
 
     rapidjson::StringBuffer buffer;
@@ -302,11 +309,12 @@ void terminal::start_daemon() {
 }
 
 void terminal::callback_rpc() {
+    std::string res_form;
     while(true){
         usleep(5000);
         if (event == "open_door") {
             if (is_ready()) {
-                std::string res_form;
+                
                 grab_frame();
                 save_frame("/home/changseok/Desktop/");
                 if (post_image(event_payload))
@@ -346,13 +354,10 @@ void terminal::callback_rpc() {
                     res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", false);
                 mqtt_publish(res_form);
             }
-            event = "NONE";
-            event_payload = "NONE";
+            clear_event_data();
         } else if (event == "collect_dataset") {
             rapidjson::Document d;
             d.Parse(event_payload.c_str());
-
-            std::string res_form;
             int64_t image_id;
             if (is_ready()){
                 door_open();
@@ -372,16 +377,53 @@ void terminal::callback_rpc() {
                 res_form = create_response_form(event_payload, "ack", "", "", false);
                 mqtt_publish(res_form);
             }
-            event = "NONE";
-            event_payload = "NONE";
+            clear_event_data();
         } else if (event == "grab_image") {
             grab_frame();
             save_frame("/home/changseok/Desktop/");
             post_image(event_payload);
-            event = "NONE";
-            event_payload = "NONE";
+            clear_event_data();
+        } else if(event == "camera_module_set"){
+            if(operate_camera_module_set(event_payload)){
+                res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "camera_module_set success", true);
+            }else{
+                res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "camera_module_set fail", false);
+            }
+            mqtt_publish(res_form);
+            clear_event_data();
+        }else if(event == "camera_module_get"){
+            if(operate_camera_module_get(event_payload)){
+                res_form = create_response_form(event_payload, "camera_module_get_resp", "camera_module_get", "camera_module_get success", true);
+            }else{
+                res_form = create_response_form(event_payload, "camera_module_get_resp", "camera_module_get", "camera_module_get fail", false);
+            }
+            mqtt_publish(res_form);
+            clear_event_data();
         } else if (event == "terminate") {
             break;
         }
+        
     }
+    
+}
+
+int terminal::operate_camera_module_set(std::string event_payload){
+
+    if(!set_module_profile(event_payload)) return false;
+    if(!update_module_profile()) return false;
+
+    return true;
+}
+
+int terminal::operate_camera_module_get(std::string event_payload){
+    rapidjson::Document json_data;
+    json_data.Parse(event_payload.c_str());
+    // TODO: module 정보 가져가는 부분 구현 필요
+
+    return true;
+}
+
+void terminal::clear_event_data(){
+    event = "NONE";
+    event_payload = "NONE";
 }

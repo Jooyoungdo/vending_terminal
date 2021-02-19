@@ -95,8 +95,13 @@ public:
     // upload image to database
     int64_t database_upload(cv::Mat iter, std::string env_id, std::string type);
 
+    // operations of command from server
+    int operate_camera_module_set(std::string event_payload);
+    int operate_camera_module_get(std::string event_payload);
+    // std::string create_response_camera_module_set();
     void start_daemon();
     void callback_rpc();
+    void clear_event_data();
 
 };
 
