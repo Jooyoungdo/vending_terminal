@@ -50,20 +50,20 @@ private:
     ~CameraModuleSetting() {};
  
     static CameraModuleSetting* instance;
-    std::vector<CameraModuleInfo> moduleInfoList;
+    std::vector<CameraModuleInfo> moduleinfo_list;
     logger log = logger("CAM_MODULE"); //logger object for print log
 public:
     static CameraModuleSetting* getInstance();
     std::vector<CameraModuleInfo> getModuleInfoList();
-    int getModuleInfoCount();
-    bool setModuleInfo(std::string json);
-    void printModuleInfo(CameraModuleInfo moduleInfo);
-    bool saveProfile(CameraModuleInfo moduleInfo);
-    bool addModuleInfo(CameraModuleInfo moduleInfo);
+    int GetModuleinfoCount();
+    bool SetModuleinfo(std::string json);
+    void PrintModuleInfo(CameraModuleInfo moduleInfo);
+    bool SaveProfile(CameraModuleInfo moduleInfo);
+    bool AddModuleInfo(CameraModuleInfo moduleInfo);
     CameraModuleInfo getProfile(ConnectedInfo connInfo);
     bool updateProfile(std::vector <cv::VideoCapture> cameras);
-    bool updateDefaultProfile(std::vector <cv::VideoCapture> cameras);
-    CameraModuleInfo getDefaultModuleInfo();
+    bool UpdateDefaultProfile(std::vector <cv::VideoCapture> cameras);
+    CameraModuleInfo GetDefaultModuleInfo();
     
 };
 //CameraModuleSetting* CameraModuleSetting::instance = nullptr;

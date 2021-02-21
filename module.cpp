@@ -3,14 +3,14 @@
 CameraModuleSetting* CameraModuleSetting::instance = nullptr;
 
 std::vector<CameraModuleInfo> CameraModuleSetting::getModuleInfoList(){
-    return moduleInfoList;
+    return moduleinfo_list;
 }
 
-int CameraModuleSetting::getModuleInfoCount(){
-    return moduleInfoList.size();
+int CameraModuleSetting::GetModuleinfoCount(){
+    return moduleinfo_list.size();
 }
 
-void CameraModuleSetting::printModuleInfo(CameraModuleInfo moduleInfo){
+void CameraModuleSetting::PrintModuleInfo(CameraModuleInfo moduleInfo){
     log.print_log(("-- Connected Info -- "));
     log.print_log(("port_num : " + std::to_string(moduleInfo.connected_info.port_num)));
     log.print_log(("interface_type : " + std::string(moduleInfo.connected_info.interface_type)));
@@ -28,7 +28,7 @@ void CameraModuleSetting::printModuleInfo(CameraModuleInfo moduleInfo){
 
 
 
-bool CameraModuleSetting::setModuleInfo(std::string json){
+bool CameraModuleSetting::SetModuleinfo(std::string json){
     rapidjson::Document jsonData;
     jsonData.Parse(json.c_str());
 
@@ -36,87 +36,88 @@ bool CameraModuleSetting::setModuleInfo(std::string json){
     if(!jsonData["port_num"].IsNull()){
         int port_num = jsonData["port_num"].GetInt();
         int find_port = -1;
-        for (int i=0;i<moduleInfoList.size();i++){
-            if(port_num == moduleInfoList[i].connected_info.port_num ){
+        for (int i=0;i<moduleinfo_list.size();i++){
+            if(port_num == moduleinfo_list[i].connected_info.port_num ){
                 find_port =i;
                 break;
             }
         }
         if(find_port > 0){
-            moduleInfoList[find_port].module_name = jsonData["module_name"].GetString();
-            moduleInfoList[find_port].connected_info.interface_type = jsonData["interface_type"].GetString();
-            moduleInfoList[find_port].connected_info.camera_location = jsonData["camera_location"].GetString();
-            moduleInfoList[find_port].exposure_time = jsonData["exposure_time"].GetInt();
-            moduleInfoList[find_port].aec = jsonData["aec"].GetBool();
-            moduleInfoList[find_port].awb = jsonData["awb"].GetBool();
-            moduleInfoList[find_port].color_temperature = jsonData["color_temperature"].GetInt();
-            moduleInfoList[find_port].frame_width = jsonData["frame_width"].GetInt();
-            moduleInfoList[find_port].frame_height = jsonData["frame_height"].GetInt();
+            moduleinfo_list[find_port].module_name = jsonData["module_name"].GetString();
+            moduleinfo_list[find_port].connected_info.interface_type = jsonData["interface_type"].GetString();
+            moduleinfo_list[find_port].connected_info.camera_location = jsonData["camera_location"].GetString();
+            moduleinfo_list[find_port].exposure_time = jsonData["exposure_time"].GetInt();
+            moduleinfo_list[find_port].aec = jsonData["aec"].GetBool();
+            moduleinfo_list[find_port].awb = jsonData["awb"].GetBool();
+            moduleinfo_list[find_port].color_temperature = jsonData["color_temperature"].GetInt();
+            moduleinfo_list[find_port].frame_width = jsonData["frame_width"].GetInt();
+            moduleinfo_list[find_port].frame_height = jsonData["frame_height"].GetInt();
         }else{
             log.print_log(("can't find port_number(" + std::to_string(port_num)+")"));
             return false;
         }
     }else{
     // 특정 port_num가 지정되어 있지 않으면 하나의 설정으로 전부 셋팅 한다.    
-         for (int i=0;i<moduleInfoList.size();i++){
+         for (int i=0;i<moduleinfo_list.size();i++){
             if(!jsonData["module_name"].IsNull()){
-                moduleInfoList[i].module_name = jsonData["module_name"].GetString();
+                moduleinfo_list[i].module_name = jsonData["module_name"].GetString();
             }
             if(!jsonData["interface_type"].IsNull()){
-                moduleInfoList[i].connected_info.interface_type = jsonData["interface_type"].GetString();
+                moduleinfo_list[i].connected_info.interface_type = jsonData["interface_type"].GetString();
             }
             if(!jsonData["camera_location"].IsNull()){
-                moduleInfoList[i].connected_info.camera_location = jsonData["camera_location"].GetString();
+                moduleinfo_list[i].connected_info.camera_location = jsonData["camera_location"].GetString();
             }
             if(!jsonData["exposure_time"].IsNull()){
-                moduleInfoList[i].exposure_time = jsonData["exposure_time"].GetInt();
+                moduleinfo_list[i].exposure_time = jsonData["exposure_time"].GetInt();
             }
             if(!jsonData["aec"].IsNull()){
-                moduleInfoList[i].aec = jsonData["aec"].GetBool();
+                moduleinfo_list[i].aec = jsonData["aec"].GetBool();
             }
             if(!jsonData["awb"].IsNull()){
-                moduleInfoList[i].awb = jsonData["awb"].GetBool();
+                moduleinfo_list[i].awb = jsonData["awb"].GetBool();
             }
             if(!jsonData["color_temperature"].IsNull()){
-                moduleInfoList[i].color_temperature = jsonData["color_temperature"].GetInt();
+                moduleinfo_list[i].color_temperature = jsonData["color_temperature"].GetInt();
             }
             if(!jsonData["frame_width"].IsNull()){
-                moduleInfoList[i].frame_width = jsonData["frame_width"].GetInt();
+                moduleinfo_list[i].frame_width = jsonData["frame_width"].GetInt();
             }
             if(!jsonData["frame_height"].IsNull()){
-                moduleInfoList[i].frame_height = jsonData["frame_height"].GetInt();
+                moduleinfo_list[i].frame_height = jsonData["frame_height"].GetInt();
             }
          }
     }
+    return true;
 }
 
-bool CameraModuleSetting::saveProfile(CameraModuleInfo moduleInfo){
+bool CameraModuleSetting::SaveProfile(CameraModuleInfo moduleInfo){
     return true;
 }
 
 CameraModuleInfo CameraModuleSetting::getProfile(ConnectedInfo connInfo){
-    return moduleInfoList[connInfo.port_num];
+    return moduleinfo_list[connInfo.port_num];
 }
 
 bool CameraModuleSetting::updateProfile(std::vector <cv::VideoCapture> cameras){
 
     for(int i=0;i<cameras.size();i++){
-        for(int j=0;j<moduleInfoList.size();j++){
-            if (i == moduleInfoList[j].connected_info.camera_id){
-                if(moduleInfoList[j].frame_width > 0)
-                    cameras[i].set(cv::CAP_PROP_FRAME_WIDTH,moduleInfoList[j].frame_width);
-                if(moduleInfoList[j].frame_height > 0)
-                    cameras[i].set(cv::CAP_PROP_FRAME_HEIGHT,moduleInfoList[j].frame_height);
+        for(int j=0;j<moduleinfo_list.size();j++){
+            if (i == moduleinfo_list[j].connected_info.camera_id){
+                if(moduleinfo_list[j].frame_width > 0)
+                    cameras[i].set(cv::CAP_PROP_FRAME_WIDTH,moduleinfo_list[j].frame_width);
+                if(moduleinfo_list[j].frame_height > 0)
+                    cameras[i].set(cv::CAP_PROP_FRAME_HEIGHT,moduleinfo_list[j].frame_height);
                 else
                     return false;
-                cameras[i].set(cv::CAP_PROP_AUTO_EXPOSURE,moduleInfoList[j].aec);
-                cameras[i].set(cv::CAP_PROP_AUTO_WB,moduleInfoList[j].awb);
-                if(moduleInfoList[j].exposure_time <=13 && moduleInfoList[j].exposure_time >=-13)
-                    cameras[i].set(cv::CAP_PROP_EXPOSURE,moduleInfoList[j].exposure_time);
+                cameras[i].set(cv::CAP_PROP_AUTO_EXPOSURE,moduleinfo_list[j].aec);
+                cameras[i].set(cv::CAP_PROP_AUTO_WB,moduleinfo_list[j].awb);
+                if(moduleinfo_list[j].exposure_time <=13 && moduleinfo_list[j].exposure_time >=-13)
+                    cameras[i].set(cv::CAP_PROP_EXPOSURE,moduleinfo_list[j].exposure_time);
                 else
                     return false;    
-                if(moduleInfoList[j].color_temperature <=10000 && moduleInfoList[j].color_temperature >=0)
-                    cameras[i].set(cv::CAP_PROP_WB_TEMPERATURE,moduleInfoList[j].color_temperature);
+                if(moduleinfo_list[j].color_temperature <=10000 && moduleinfo_list[j].color_temperature >=0)
+                    cameras[i].set(cv::CAP_PROP_WB_TEMPERATURE,moduleinfo_list[j].color_temperature);
                 else
                     return false;
             }
@@ -125,9 +126,9 @@ bool CameraModuleSetting::updateProfile(std::vector <cv::VideoCapture> cameras){
     }
     return true;
 }
-bool CameraModuleSetting::updateDefaultProfile(std::vector <cv::VideoCapture> cameras){
+bool CameraModuleSetting::UpdateDefaultProfile(std::vector <cv::VideoCapture> cameras){
 
-    CameraModuleInfo defaultModuleInfo = getDefaultModuleInfo();
+    CameraModuleInfo defaultModuleInfo = GetDefaultModuleInfo();
     for(int i=0;i<cameras.size();i++){
         cameras[i].set(cv::CAP_PROP_FRAME_WIDTH, defaultModuleInfo.frame_width);
         cameras[i].set(cv::CAP_PROP_FRAME_HEIGHT, defaultModuleInfo.frame_height);
@@ -139,7 +140,7 @@ bool CameraModuleSetting::updateDefaultProfile(std::vector <cv::VideoCapture> ca
     return true;
 }
 
-CameraModuleInfo CameraModuleSetting::getDefaultModuleInfo(){
+CameraModuleInfo CameraModuleSetting::GetDefaultModuleInfo(){
     CameraModuleInfo defaultModuleSetting;
     // TODO: default setting value is hardcoded
     // TODO: this setting value should be from saved value
@@ -154,8 +155,8 @@ CameraModuleInfo CameraModuleSetting::getDefaultModuleInfo(){
     return defaultModuleSetting;
 }
 
-bool CameraModuleSetting::addModuleInfo(CameraModuleInfo moduleInfo){
-    moduleInfoList.push_back(moduleInfo);
+bool CameraModuleSetting::AddModuleInfo(CameraModuleInfo moduleInfo){
+    moduleinfo_list.push_back(moduleInfo);
     return true;
 }
 CameraModuleSetting* CameraModuleSetting::getInstance(){

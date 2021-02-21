@@ -58,7 +58,7 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
 
                     //FIXME: hardcoded code should be changed if mipi camera is used  
                     module.connected_info.interface_type = std::string("USB");
-                    cameraModuleSetting->addModuleInfo(module);
+                    cameraModuleSetting->AddModuleInfo(module);
                     video_device.push_back(std::stoi(match[1].str()));
                     //cv::VideoCapture _cap(prefix_path + match.str(), cv::CAP_V4L);
     //                _cap.open(());
@@ -78,11 +78,11 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
             CameraModuleInfo module;
             module.connected_info.port_num = 0;
             module.connected_info.camera_id = 0;
-            cameraModuleSetting->addModuleInfo(module);
+            cameraModuleSetting->AddModuleInfo(module);
             caps.emplace_back(cv::VideoCapture(0,cv::CAP_V4L));
             module.connected_info.port_num = 1;
             module.connected_info.camera_id = 1;
-            cameraModuleSetting->addModuleInfo(module);
+            cameraModuleSetting->AddModuleInfo(module);
             caps.emplace_back(cv::VideoCapture(1,cv::CAP_V4L));
         }
 #endif        
@@ -227,7 +227,7 @@ bool camera::set_module_profile(std::string json){
          }
     }
     for(int i=0;i<moduleInfoList.size();i++){
-        cameraModuleSetting->printModuleInfo(cameraModuleSetting->getModuleInfoList()[i]);
+        cameraModuleSetting->PrintModuleInfo(cameraModuleSetting->getModuleInfoList()[i]);
     }
     return true;
 }
