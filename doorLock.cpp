@@ -3,7 +3,7 @@
 //
 
 #include "doorLock.h"
-
+#define TEST_DEBUG
 //default initializer (deprecated)
 doorLock::doorLock(){
     log.print_log("default initiailizer called, this initializer used for debugging. please use another one!");
@@ -22,7 +22,12 @@ doorLock::doorLock(int lock, int door, int trigger){
     pin_ctr.open("/sys/class/gpio/export", std::ios::out);
     if (!pin_ctr.is_open()){
         log.print_log("\ncan not open file \"/sys/class/gpio/export\" please check again");
+#ifdef TEST_DEBUG
+        log.print_log("TEST_DEBUG ");
+        return;        
+#else
         std::exit(1);
+#endif        
     }
 
     pin_ctr << this->trigger_num;

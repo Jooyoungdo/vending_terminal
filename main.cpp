@@ -31,7 +31,10 @@ int main(int argc, char** argv) {
     //create terminal object and initialize mqtt, MySQl
     terminal T(broker_ip, 0, device_id, device_id, LOCK_SENSOR, DOOR_SENSOR, LOCK_TRIGGER);
     T.initialize_mqtt_client();
+#ifndef TEST_DEBUG    
     T.initialize_MySQL_connector();
+#endif
+
     T.start_daemon();
 
     //start vending terminal until q pressed
