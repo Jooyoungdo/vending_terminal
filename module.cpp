@@ -16,7 +16,7 @@ void CameraModuleSetting::PrintModuleInfo(CameraModuleInfo moduleInfo){
     log.print_log(("interface_type : " + std::string(moduleInfo.connected_info.interface_type)));
     log.print_log(("camera_location : " + std::string(moduleInfo.connected_info.camera_location)));
 
-    log.print_log(("-- Camera Setting Info -- "));
+    log.print_log(("-- Setting Info -- "));
     log.print_log(("module_name : " + std::string(moduleInfo.module_name)));
     log.print_log(("exposure_time : " + std::to_string(moduleInfo.exposure_time)));
     log.print_log(("aec : " + std::string(moduleInfo.aec?"true":"false")));
