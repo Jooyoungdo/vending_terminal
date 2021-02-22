@@ -78,10 +78,18 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
             CameraModuleInfo module;
             module.connected_info.port_num = 0;
             module.connected_info.camera_id = 0;
+            module.exposure_time = 0;
+            module.color_temperature = 5000;
+            module.frame_width = 1920;
+            module.frame_height = 1080;
             cameraModuleSetting->AddModuleInfo(module);
             caps.emplace_back(cv::VideoCapture(0,cv::CAP_V4L));
             module.connected_info.port_num = 1;
             module.connected_info.camera_id = 1;
+            module.exposure_time = 0;
+            module.color_temperature = 5000;
+            module.frame_width = 1920;
+            module.frame_height = 1080;
             cameraModuleSetting->AddModuleInfo(module);
             caps.emplace_back(cv::VideoCapture(1,cv::CAP_V4L));
         }
@@ -180,7 +188,7 @@ bool camera::set_module_profile(std::string json){
                 break;
             }
         }
-        if(find_port > 0){
+        if(find_port >= 0 && find_port <moduleInfoList.size() ){
             moduleInfoList[find_port].module_name = jsonData["module_name"].GetString();
             moduleInfoList[find_port].connected_info.interface_type = jsonData["interface_type"].GetString();
             moduleInfoList[find_port].connected_info.camera_location = jsonData["camera_location"].GetString();
