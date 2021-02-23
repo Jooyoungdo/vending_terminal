@@ -179,31 +179,25 @@ bool camera::set_module_profile(std::string json){
     jsonData.Parse(json.c_str());
     std::vector<CameraModuleInfo> moduleInfoList = cameraModuleSetting->getModuleInfoList();
     // port_num가 지정되어 있으면 특정 포트의 카메라만 설정한다
-    if(!jsonData["port_num"].IsNull()){
-        int port_num = jsonData["port_num"].GetInt();
-        int find_port = -1;
-        for (int i=0;i<moduleInfoList.size();i++){
-            if(port_num == moduleInfoList[i].connected_info.port_num ){
-                find_port =i;
-                break;
-            }
-        }
-        if(find_port >= 0 && find_port <moduleInfoList.size() ){
-            moduleInfoList[find_port].module_name = jsonData["module_name"].GetString();
-            moduleInfoList[find_port].connected_info.interface_type = jsonData["interface_type"].GetString();
-            moduleInfoList[find_port].connected_info.camera_location = jsonData["camera_location"].GetString();
-            moduleInfoList[find_port].exposure_time = jsonData["exposure_time"].GetInt();
-            moduleInfoList[find_port].aec = jsonData["aec"].GetBool();
-            moduleInfoList[find_port].awb = jsonData["awb"].GetBool();
-            moduleInfoList[find_port].color_temperature = jsonData["color_temperature"].GetInt();
-            moduleInfoList[find_port].frame_width = jsonData["frame_width"].GetInt();
-            moduleInfoList[find_port].frame_height = jsonData["frame_height"].GetInt();
+    if(!jsonData["camera_id"].IsNull()){
+        int camera_id = jsonData["camera_id"].GetInt();
+        
+        if(camera_id >= 0 && camera_id <moduleInfoList.size() ){
+            moduleInfoList[camera_id].module_name = jsonData["module_name"].GetString();
+            moduleInfoList[camera_id].connected_info.interface_type = jsonData["interface_type"].GetString();
+            moduleInfoList[camera_id].connected_info.camera_location = jsonData["camera_location"].GetString();
+            moduleInfoList[camera_id].exposure_time = jsonData["exposure_time"].GetInt();
+            moduleInfoList[camera_id].aec = jsonData["aec"].GetBool();
+            moduleInfoList[camera_id].awb = jsonData["awb"].GetBool();
+            moduleInfoList[camera_id].color_temperature = jsonData["color_temperature"].GetInt();
+            moduleInfoList[camera_id].frame_width = jsonData["frame_width"].GetInt();
+            moduleInfoList[camera_id].frame_height = jsonData["frame_height"].GetInt();
         }else{
-            log.print_log(("can't find port_number(" + std::to_string(port_num)+")"));
+            log.print_log(("can't find camera_id(" + std::to_string(camera_id)+")"));
             return false;
         }
     }else{
-    // 특정 port_num가 지정되어 있지 않으면 하나의 설정으로 전부 셋팅 한다.    
+    // 특정 camera_id가 지정되어 있지 않으면 하나의 설정으로 전부 셋팅 한다.    
          for (int i=0;i<moduleInfoList.size();i++){
             if(!jsonData["module_name"].IsNull()){
                 moduleInfoList[i].module_name = jsonData["module_name"].GetString();
