@@ -29,13 +29,22 @@
 class terminal : public camera, public doorLock
 {
 private:
-    terminal(const terminal &terminal, mqtt::topic pub1, mqtt::topic sub2, mqtt::topic sub1);
+    terminal(const terminal &terminal, 
+    //mqtt::topic pub1,mqtt::topic pub2, 
+    mqtt::topic sub2, mqtt::topic sub3, mqtt::topic sub1);
 
 // mqtt broker address with port number
     const std::string SERVER_ADDRESS;
     // mqtt client optional parameter
     const bool NO_LOCAL = true;
+    
+    // this topic is defined at https://ai0.beyless.com/yona/jangwook.oh/BAIVE/post/20#
+    const std::string MQTT_CLIENT_TOPIC_DEVICE_IMAGE_UPLOAD = "device_image_upload";
+    const std::string MQTT_CLIENT_TOPIC_DEVICE_OPERATION = "device_operation";
+    const std::string MQTT_CLIENT_TOPIC_DEVICE_UPDATE = "device_update";
 
+    const std::string MQTT_SERVER_TOPIC_DEVICE_PREFIX = "DEVICE_";
+    const std::string MQTT_SERVER_TOPIC_UPDATER_PREFIX = "UPDATER_";
     // MQTT client QOS (will be modified)
     int QOS;
     // MQTT client options...
@@ -48,7 +57,9 @@ private:
     // MQTT client publish, subscribe objects
     mqtt::topic sub1;
     mqtt::topic sub2;
-    mqtt::topic pub1;
+    mqtt::topic sub3;
+    // mqtt::topic pub1;
+    // mqtt::topic pub2;
 
     // logger for SYSTEM terminal
     logger log = logger("SYS");
@@ -81,7 +92,7 @@ public:
     void initialize_MySQL_connector();
 
     // mqsql publish given string type payload (will be modified)
-    void mqtt_publish(std::string payload);
+    void mqtt_publish(std::string payload,std::string topic);
 
     // doorLock_daemon, deprecated
     void doorLock_daemon();

@@ -6,8 +6,10 @@ terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
         SERVER_ADDRESS(_SERVER_ADDRESS),
         cli(SERVER_ADDRESS, "DEVICE_"+_user_id),
         sub1(cli, _topic, _QOS),
-        sub2(cli, "DEVICE_"+_topic, _QOS),
-        pub1(cli, "device_operation", _QOS),
+        sub2(cli, MQTT_SERVER_TOPIC_DEVICE_PREFIX+_topic, _QOS),
+        sub3(cli, MQTT_SERVER_TOPIC_UPDATER_PREFIX+_topic, _QOS),
+        // pub1(cli, MQTT_TOPIC_DEVICE_OPERATION, _QOS),
+        // pub2(cli, MQTT_TOPIC_DEVICE_UPDATE, _QOS),
         camera("auto_detect", "/dev/v4l/by-path/", "platform-fe3c0000.usb-usb-0:1.(\\d):1.0-video-index0"),
 //        camera(camera_index, num),
         doorLock(lock, door, trigger)
@@ -114,34 +116,33 @@ void terminal::initialize_mqtt_client() {
         auto tok = cli.connect(connOpts);
         tok->wait();
 
-        auto subOpts = mqtt::subscribe_options(NO_LOCAL);
-        pub1.subscribe(subOpts)->wait();
-        log.print_log("publisher connected");
+        // auto subOpts = mqtt::subscribe_options(NO_LOCAL);
+        // pub1.subscribe(subOpts)->wait();
+        // log.print_log("publisher1 connected");
+        // pub2.subscribe(subOpts)->wait();
+        // log.print_log("publisher2 connected");
 
     } catch (const mqtt::exception &exc) {
         std::cerr << exc.what() << std::endl;
     }
 
     cli.set_message_callback([this](mqtt::const_message_ptr msg) {
-        if (msg->get_topic() == topic) {
-            // 1. Parse a JSON string into DOM.
             std::string json = std::string(msg->to_string());
             rapidjson::Document d;
             d.Parse(json.c_str());
-
-//            std::string msg_group_type = d["msg_group_type"].GetString();
             std::string type = d["type"].GetString();
             event = type;
             event_payload = json;
-        }
     });
 
     try {
         auto subOpts = mqtt::subscribe_options(NO_LOCAL);
         sub1.subscribe(subOpts)->wait();
-        log.print_log("subscriber connected");
+        log.print_log("subscriber1 connected");
         sub2.subscribe(subOpts)->wait();
-        log.print_log("subscriber connected");
+        log.print_log("subscriber2 connected");
+        sub3.subscribe(subOpts)->wait();
+        log.print_log("subscriber3 connected");
 
     } catch (const mqtt::exception &exc) {
         std::cerr << exc.what() << std::endl;
@@ -175,11 +176,11 @@ void terminal::initialize_MySQL_connector() {
 }
 
 // publish stirng type payload using pub1 object
-void terminal::mqtt_publish(std::string payload) {
-    pub1.publish(payload);
+void terminal::mqtt_publish(std::string payload, std::string topic)
+{
+    mqtt::message_ptr msg{mqtt::message::create(topic, payload)};
+    cli.publish(msg);  
 }
-
-
 
 // create response json form
 std::string terminal::create_response_form(std::string json, std::string type, std::string stage, std::string msg, bool result){
@@ -193,6 +194,8 @@ std::string terminal::create_response_form(std::string json, std::string type, s
     input_form.Parse(json.c_str());
 
     std::vector<std::string> json_members;
+
+    // TODO: refactoring : InitJsonmember
     if (type.compare("image_upload") == 0){
         json_members.assign({"msg_id", "token", "operation_log_id", "type",
                              "stage", "msg", "ret_code",
@@ -206,13 +209,17 @@ std::string terminal::create_response_form(std::string json, std::string type, s
         json_members.assign({"msg", "ret_code", "env_id"});
     }
     else if (type.compare("camera_module_set_resp") == 0){
-        json_members.assign({"msg_id", "device_id", "request_id", "type",
-                             "msg", "ret_code",
-                             "timestamp"});
+        json_members.assign({"device_id", "request_id", "type",
+                             "msg", "ret_code"});
+    }
+    else if (type.compare("camera_module_get_resp") == 0){
+        json_members.assign({"device_id", "request_id", "type",
+                             "msg", "ret_code"});
     }
     else
         return NULL;
 
+    // TODO: refactoring : SetJsonmember
     for (auto iter = json_members.begin(); iter!= json_members.end(); iter++){
         if (input_form.HasMember(iter->c_str())){
             rapidjson::Value name;
@@ -236,16 +243,27 @@ std::string terminal::create_response_form(std::string json, std::string type, s
                         return_form.AddMember("ret_code", "0001", allocator);
             } else {
                 log.print_log("can't find return type handler ... abort");
+                log.print_log(*iter);
             }
         }
     }
-    if (msg.find("open_door")>=0){
+    if(strstr(msg.c_str(),"open_door") != NULL){
         return_form["type"] = "open_door_resp";
-    } else if (msg.find("close_door")>=0) {
+    }else if(strstr(msg.c_str(),"close_door") != NULL){
         return_form["type"] = "close_door_resp";
-    }else if(msg.find("camera_module_set") >= 0){
+    }else if(strstr(msg.c_str(),"camera_module_set") != NULL){
         return_form["type"] = "camera_module_set_resp";
+    }else if(strstr(msg.c_str(),"camera_module_get") != NULL){
+        return_form["type"] = "camera_module_get_resp";
     }
+    
+    // if (msg.find("open_door")>=0){
+    //     return_form["type"] = "open_door_resp";
+    // } else if (msg.find("close_door")>=0) {
+    //     return_form["type"] = "close_door_resp";
+    // }else if(msg.find("camera_module_set") >= 0){
+    //     return_form["type"] = "camera_module_set_resp";
+    // }
 
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -321,13 +339,13 @@ void terminal::callback_rpc() {
                     res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", true);
                 else
                     res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", false);
-                mqtt_publish(res_form);
+                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
 
                 if (door_open())
                     res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", true);
                 else
                     res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", false);
-                mqtt_publish(res_form);
+                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
 
                 if (wait_open())
                     wait_close();
@@ -340,7 +358,7 @@ void terminal::callback_rpc() {
                 else
                     res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door",
                                                     false);
-                mqtt_publish(res_form);
+                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
 
                 grab_frame();
                 save_frame("/home/changseok/Desktop/");
@@ -352,7 +370,7 @@ void terminal::callback_rpc() {
                     res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", true);
                 else
                     res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", false);
-                mqtt_publish(res_form);
+                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
             }
             clear_event_data();
         } else if (event == "collect_dataset") {
@@ -372,10 +390,10 @@ void terminal::callback_rpc() {
                     image_id = database_upload(*iter, d["env_id"].GetString(), d["image_type"].GetString());
                 }
                 res_form = create_response_form(event_payload, "ack", "", std::to_string(image_id), true);
-                mqtt_publish(res_form);
+                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
             } else {
                 res_form = create_response_form(event_payload, "ack", "", "", false);
-                mqtt_publish(res_form);
+                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
             }
             clear_event_data();
         } else if (event == "grab_image") {
@@ -384,12 +402,15 @@ void terminal::callback_rpc() {
             post_image(event_payload);
             clear_event_data();
         } else if(event == "camera_module_set"){
+            log.print_log("received camera_module_set");
             if(operate_camera_module_set(event_payload)){
                 res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "camera_module_set success", true);
+                log.print_log("send camera_module_set success");
             }else{
                 res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "camera_module_set fail", false);
+                log.print_log("send camera_module_set fail");
             }
-            mqtt_publish(res_form);
+            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_UPDATE);
             clear_event_data();
         }else if(event == "camera_module_get"){
             if(operate_camera_module_get(event_payload)){
@@ -397,10 +418,15 @@ void terminal::callback_rpc() {
             }else{
                 res_form = create_response_form(event_payload, "camera_module_get_resp", "camera_module_get", "camera_module_get fail", false);
             }
-            mqtt_publish(res_form);
+            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_UPDATE);
             clear_event_data();
         } else if (event == "terminate") {
             break;
+        }else if(event != "NONE"){
+            log.print_log("received unkonwn command");
+            clear_event_data();
+            log.print_log(event);
+
         }
         
     }
@@ -409,8 +435,10 @@ void terminal::callback_rpc() {
 
 int terminal::operate_camera_module_set(std::string event_payload){
 
-    if(!set_module_profile(event_payload)) return false;
-    if(!update_module_profile()) return false;
+    if(!set_module_profile(event_payload)) 
+        return false;
+    if(!update_module_profile()) 
+        return false;
 
     return true;
 }
@@ -422,6 +450,18 @@ int terminal::operate_camera_module_get(std::string event_payload){
 
     return true;
 }
+
+// int terminal::operate_grab_image(std::string event_payload){
+// }
+
+// int terminal::operate_collect_data(std::string event_payload){
+// }
+
+// int terminal::operate_open_door(std::string event_payload){
+// }
+
+// int terminal::operate_close_door(std::string event_payload){
+// }
 
 void terminal::clear_event_data(){
     event = "NONE";
