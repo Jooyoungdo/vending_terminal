@@ -1,5 +1,6 @@
 #include <iostream>
 #include "terminal.h"
+#include "debug.h"
 
 // Door lock controll pin numbers.. (up to device setting)
 #define LOCK_SENSOR 42
@@ -13,7 +14,7 @@
  */
 int main(int argc, char** argv) {
     // user argument parsing
-#ifdef TEST_DEBUG
+#ifdef DEBUG_BAIVE
     std::string device_id = std::string("20002");
     std::string broker_ip = std::string("ai0.beyless.com:1883");
 #else

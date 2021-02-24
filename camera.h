@@ -16,6 +16,7 @@
 #include "module.h"
 
 #include "logger.h"
+#include "debug.h"
 #define DAEMON_PROCESS_CAMERA_H
 
 class camera {

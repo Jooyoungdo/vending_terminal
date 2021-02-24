@@ -22,8 +22,8 @@ doorLock::doorLock(int lock, int door, int trigger){
     pin_ctr.open("/sys/class/gpio/export", std::ios::out);
     if (!pin_ctr.is_open()){
         log.print_log("\ncan not open file \"/sys/class/gpio/export\" please check again");
-#ifdef TEST_DEBUG
-        log.print_log("TEST_DEBUG ");
+#ifdef DEBUG_BAIVE
+        log.print_log("DEBUG_BAIVE ");
         return;        
 #else
         std::exit(1);

@@ -72,9 +72,11 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
             }
         
         }
-#ifdef TEST_DEBUG        
         else{
+            log.print_log("can't find connected USB type camrea");
+#ifdef DEBUG_BAIVE            
             //Set Dummy Camrea Info
+            log.print_log("set dummy camera info");
             CameraModuleInfo module;
             module.connected_info.port_num = 0;
             module.connected_info.camera_id = 0;
@@ -82,18 +84,24 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
             module.color_temperature = 5000;
             module.frame_width = 1920;
             module.frame_height = 1080;
+            module.awb = true;
+            module.aec = true;
             cameraModuleSetting->AddModuleInfo(module);
-            caps.emplace_back(cv::VideoCapture(0,cv::CAP_V4L));
+            //log.print_log("camera[0] info 1920 x 1080, port num 0, camera_id 0, exposure time 0,  ");
+            camera_capture.emplace_back(cv::VideoCapture(0,cv::CAP_V4L));
             module.connected_info.port_num = 1;
             module.connected_info.camera_id = 1;
             module.exposure_time = 0;
             module.color_temperature = 5000;
             module.frame_width = 1920;
             module.frame_height = 1080;
+            module.awb = true;
+            module.aec = true;
             cameraModuleSetting->AddModuleInfo(module);
-            caps.emplace_back(cv::VideoCapture(1,cv::CAP_V4L));
+            camera_capture.emplace_back(cv::VideoCapture(1,cv::CAP_V4L));
+#endif               
         }
-#endif        
+     
     }
 }
 

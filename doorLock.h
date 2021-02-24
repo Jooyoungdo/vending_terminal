@@ -11,7 +11,7 @@
 #include <thread>
 #include <chrono>
 #include <ctime>
-
+#include "debug.h"
 #include "logger.h"
 #define DAEMON_PROCESS_DOORLOCK_H
 /*
