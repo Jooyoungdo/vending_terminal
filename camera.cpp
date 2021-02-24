@@ -3,12 +3,9 @@
 //
 
 #include "camera.h"
-#define TEST_DEBUG
+
 // default camera class initializer, only for debuggin, deprecated
 camera::camera(){
-    //default Video_device is 0
-    video_device.push_back(0);
-
     cv::VideoCapture _cap;
 #ifdef OLD_OPENCV
     _cap.open("/dev/video0", CV_CAP_V4L);
@@ -16,7 +13,7 @@ camera::camera(){
     _cap.open("/dev/video0", cv::CAP_V4L);
 #endif
 
-    caps.push_back(_cap);
+    camera_capture.push_back(_cap);
 }
 
 camera::camera(std::string mode, std::string prefix_path, std::string regex_grammer) {
@@ -24,57 +21,55 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
     char* string_buffer;
     // if mode is not in auto detect, call default initializer
     std::cout << mode  << std::endl;
-    cameraModuleSetting = CameraModuleSetting::getInstance();
+    cameraModuleSetting = CameraModuleSetting::GetInstance();
     if (mode != "auto_detect"){
-        //default Video_device is 0
-        video_device.push_back(0);
-
         cv::VideoCapture _cap;
 #ifdef OLD_OPENCV
         _cap.open("/dev/video0", CV_CAP_V4L);
 #else
         _cap.open("/dev/video0", cv::CAP_V4L);
 #endif
-        caps.push_back(_cap);
+        camera_capture.push_back(_cap);
     }
     else {
         std::regex re (regex_grammer.c_str());
         std::smatch match;
 
-        // TODO: check directory is exist or not
         if(std::experimental::filesystem::is_directory(prefix_path.c_str())){
             for (auto & entry : std::experimental::filesystem::directory_iterator(prefix_path.c_str())){
                 std::string str = entry.path().string();
                 if (std::regex_search(str, match, re, std::regex_constants::match_default)){
+
                     CameraModuleInfo module;
-                    string_buffer = new char[50];
-                    sprintf(string_buffer, "camera device found on port number : %s", match[1].str().c_str());
-                    log.print_log(string_buffer);
-                    delete string_buffer;
+                    module.connected_info.camera_id = camera_capture.size();
                     module.connected_info.port_num = std::stoi(match[1].str());
-
-                    // if video_device size is 0, camera id is 0 
-                    module.connected_info.camera_id = video_device.size();
-
                     //FIXME: hardcoded code should be changed if mipi camera is used  
-                    module.connected_info.interface_type = std::string("USB");
+                    module.connected_info.interface_type = "USB";
+                    log.print_log( "camera device found on port number :" + match[1].str());
+                    // if camera_capture size is 0, camera id is 0 
+                    //CameraModuleInfo module = cameraModuleSetting->GetDefaultProfile(port_num,"USB");
                     cameraModuleSetting->AddModuleInfo(module);
-                    video_device.push_back(std::stoi(match[1].str()));
+                    
                     //cv::VideoCapture _cap(prefix_path + match.str(), cv::CAP_V4L);
     //                _cap.open(());
 #ifdef OLD_OPENCV
-                    caps.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), CV_CAP_V4L));
+                    camera_capture.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), CV_CAP_V4L));
 #else
-                    caps.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), cv::CAP_V4L));
+                    camera_capture.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), cv::CAP_V4L));
 #endif
 
                 }
             }
+
+            //TODO: 기본 카메라의 프로필의 연결 정보와 장착된 카메라의 연결 정보 비교
+            //TODO: 동일 할 경우 기본 프로필의 카메라 설정 정보로 업데이트
+            //TODO: 다를 경우 ?로그 찍고 업데이트 ㄴㄴ
         
         }
+
         else{
             log.print_log("can't find connected USB type camrea");
-#ifdef DEBUG_BAIVE            
+#ifdef DEBUG_BAIVE
             //Set Dummy Camrea Info
             log.print_log("set dummy camera info");
             CameraModuleInfo module;
@@ -99,9 +94,8 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
             module.aec = true;
             cameraModuleSetting->AddModuleInfo(module);
             camera_capture.emplace_back(cv::VideoCapture(1,cv::CAP_V4L));
-#endif               
+#endif
         }
-     
     }
 }
 
@@ -109,10 +103,9 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
 camera::camera(int* camera_index, int num){
     //hard copy
     for(int i = 0; i < num; i++){
-        video_device.push_back(camera_index[i]);
         cv::VideoCapture _cap;
         _cap.open(camera_index[i]);
-        caps.push_back(_cap);
+        camera_capture.push_back(_cap);
     }
 }
 
@@ -124,7 +117,7 @@ bool camera::grab_frame() {
     // grab images from predefined capture devices
     try{
         std::vector<cv::VideoCapture>::iterator iter;
-        for(iter = caps.begin(); iter != caps.end(); iter++){
+        for(iter = camera_capture.begin(); iter != camera_capture.end(); iter++){
 #ifdef OLD_OPEN_CV
             iter->set(CV_CAP_PROP_FRAME_WIDTH, 1920);
             iter->set(CV_CAP_PROP_FRAME_HEIGHT, 1080);
@@ -178,71 +171,53 @@ bool camera::save_frame(std::string _PATH){
 
 int camera::get_image_count() {
 
-    return video_device.size();
+    return camera_capture.size();
 
 }
 
 bool camera::set_module_profile(std::string json){
     rapidjson::Document jsonData;
     jsonData.Parse(json.c_str());
-    std::vector<CameraModuleInfo> moduleInfoList = cameraModuleSetting->getModuleInfoList();
-    // port_num가 지정되어 있으면 특정 포트의 카메라만 설정한다
-    if(!jsonData["camera_id"].IsNull()){
+    CameraModuleInfo module;
+    int module_count = cameraModuleSetting->GetModuleinfoCount();
+    if(!jsonData["camera_id"].IsNull() && jsonData["camera_id"].GetInt() < module_count){
         int camera_id = jsonData["camera_id"].GetInt();
         
-        if(camera_id >= 0 && camera_id <moduleInfoList.size() ){
-            moduleInfoList[camera_id].module_name = jsonData["module_name"].GetString();
-            moduleInfoList[camera_id].connected_info.interface_type = jsonData["interface_type"].GetString();
-            moduleInfoList[camera_id].connected_info.camera_location = jsonData["camera_location"].GetString();
-            moduleInfoList[camera_id].exposure_time = jsonData["exposure_time"].GetInt();
-            moduleInfoList[camera_id].aec = jsonData["aec"].GetBool();
-            moduleInfoList[camera_id].awb = jsonData["awb"].GetBool();
-            moduleInfoList[camera_id].color_temperature = jsonData["color_temperature"].GetInt();
-            moduleInfoList[camera_id].frame_width = jsonData["frame_width"].GetInt();
-            moduleInfoList[camera_id].frame_height = jsonData["frame_height"].GetInt();
+        module.module_name = jsonData["module_name"].GetString();
+        module.connected_info.interface_type = jsonData["interface_type"].GetString();
+        module.connected_info.camera_location = jsonData["camera_location"].GetString();
+        module.connected_info.camera_id = jsonData["camera_id"].GetInt();
+        module.exposure_time = jsonData["exposure_time"].GetInt();
+        module.aec = jsonData["aec"].GetBool();
+        module.awb = jsonData["awb"].GetBool();
+        module.color_temperature = jsonData["color_temperature"].GetInt();
+        module.frame_width = jsonData["frame_width"].GetInt();
+        module.frame_height = jsonData["frame_height"].GetInt();
+
+        if(camera_id >=0 && camera_id < module_count){
+            //setting single camera profile
+            cameraModuleSetting->InsertModuleInfo(camera_id,module);
+        }else if(camera_id == -1){
+            //setting all camera profile
+            for(int i =0;i<module_count;i++){
+                cameraModuleSetting->InsertModuleInfo(i,module);
+            }
         }else{
             log.print_log(("can't find camera_id(" + std::to_string(camera_id)+")"));
             return false;
         }
     }else{
-    // 특정 camera_id가 지정되어 있지 않으면 하나의 설정으로 전부 셋팅 한다.    
-         for (int i=0;i<moduleInfoList.size();i++){
-            if(!jsonData["module_name"].IsNull()){
-                moduleInfoList[i].module_name = jsonData["module_name"].GetString();
-            }
-            if(!jsonData["interface_type"].IsNull()){
-                moduleInfoList[i].connected_info.interface_type = jsonData["interface_type"].GetString();
-            }
-            if(!jsonData["camera_location"].IsNull()){
-                moduleInfoList[i].connected_info.camera_location = jsonData["camera_location"].GetString();
-            }
-            if(!jsonData["exposure_time"].IsNull()){
-                moduleInfoList[i].exposure_time = jsonData["exposure_time"].GetInt();
-            }
-            if(!jsonData["aec"].IsNull()){
-                moduleInfoList[i].aec = jsonData["aec"].GetBool();
-            }
-            if(!jsonData["awb"].IsNull()){
-                moduleInfoList[i].awb = jsonData["awb"].GetBool();
-            }
-            if(!jsonData["color_temperature"].IsNull()){
-                moduleInfoList[i].color_temperature = jsonData["color_temperature"].GetInt();
-            }
-            if(!jsonData["frame_width"].IsNull()){
-                moduleInfoList[i].frame_width = jsonData["frame_width"].GetInt();
-            }
-            if(!jsonData["frame_height"].IsNull()){
-                moduleInfoList[i].frame_height = jsonData["frame_height"].GetInt();
-            }
-         }
+        std::string port_string = jsonData["camera_id"].IsNull()?"NULL": std::to_string( jsonData["camera_id"].GetInt());
+        log.print_log(("can't find camera_id(" +port_string +")"));
+        return false;
     }
-    for(int i=0;i<moduleInfoList.size();i++){
-        cameraModuleSetting->PrintModuleInfo(cameraModuleSetting->getModuleInfoList()[i]);
+    for(int i=0;i<module_count;i++){
+        cameraModuleSetting->PrintModuleInfo(cameraModuleSetting->GetProfileList()[i]);
     }
     return true;
 }
 
 bool camera::update_module_profile(){
-    cameraModuleSetting->updateProfile(caps);
+    cameraModuleSetting->UpdateProfile(camera_capture);
     return true;
 }

@@ -23,6 +23,7 @@
 #include <curl/curl.h>
 //#include </usr/include/mysql/mysql.h>
 #include <mysql/mysql.h>
+#include <pthread.h>
 
 #define DAEMON_PROCESS_TERMINAL_H
 
@@ -33,6 +34,7 @@ private:
     //mqtt::topic pub1,mqtt::topic pub2, 
     mqtt::topic sub2, mqtt::topic sub3, mqtt::topic sub1);
 
+    
 // mqtt broker address with port number
     const std::string SERVER_ADDRESS;
     // mqtt client optional parameter
@@ -82,10 +84,13 @@ private:
     std::string event = "NONE";
     std::string event_payload = "NONE";
 
+    pthread_cond_t cond;
+    pthread_mutex_t mutex;
 
 public:
     // terminal class initiaizer, also initialize all inherited classes.
     terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic, int lock, int door, int trigger);
+    ~terminal();
     // initialize MQTT client, all publisher & subscriber
     void initialize_mqtt_client();
     //initialize MYSQL database

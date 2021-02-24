@@ -7,8 +7,6 @@
 #define DOOR_SENSOR 39
 #define LOCK_TRIGGER 12
 
-#define TEST_DEBUG
-
 /*
  * argument vector lists : sudo ./daemon_process [device_id] [cam count] [cam device numbers ....] [ip address]
  */
@@ -32,7 +30,7 @@ int main(int argc, char** argv) {
     //create terminal object and initialize mqtt, MySQl
     terminal T(broker_ip, 0, device_id, device_id, LOCK_SENSOR, DOOR_SENSOR, LOCK_TRIGGER);
     T.initialize_mqtt_client();
-#ifndef TEST_DEBUG    
+#ifndef DEBUG_BAIVE    
     T.initialize_MySQL_connector();
 #endif
 

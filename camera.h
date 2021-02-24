@@ -21,8 +21,8 @@
 
 class camera {
 private:
-    std::vector <cv::VideoCapture> caps; // list of activated video capture devices
-    std::vector <int> video_device; //list of video capture device index
+    std::vector <cv::VideoCapture> camera_capture; // list of activated video capture devices
+    
     std::vector <cv::Mat> images; // list of latest images from camera
     CameraModuleSetting* cameraModuleSetting;
     logger log = logger("CAMERA"); //logger object for print log

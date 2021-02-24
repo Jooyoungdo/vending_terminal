@@ -3,7 +3,7 @@
 //
 
 #include "doorLock.h"
-#define TEST_DEBUG
+#include "debug.h"
 //default initializer (deprecated)
 doorLock::doorLock(){
     log.print_log("default initiailizer called, this initializer used for debugging. please use another one!");

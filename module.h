@@ -45,25 +45,38 @@ public:
 class CameraModuleSetting
 {
 private:
-    CameraModuleSetting() {};
+    CameraModuleSetting();
     //CameraModuleSetting(const CameraModuleSetting& other);
-    ~CameraModuleSetting() {};
+    ~CameraModuleSetting();
  
     static CameraModuleSetting* instance;
     std::vector<CameraModuleInfo> moduleinfo_list;
+    std::vector<CameraModuleInfo> default_moduleinfo_list;
     logger log = logger("CAM_MODULE"); //logger object for print log
+    const int MAX_CAMERA_COUNT = 10;
+    
 public:
-    static CameraModuleSetting* getInstance();
-    std::vector<CameraModuleInfo> getModuleInfoList();
+    static CameraModuleSetting* GetInstance();
+    std::vector<CameraModuleInfo> GetProfileList();
     int GetModuleinfoCount();
     bool SetModuleinfo(std::string json);
     void PrintModuleInfo(CameraModuleInfo moduleInfo);
-    bool SaveProfile(CameraModuleInfo moduleInfo);
+    
+    bool InsertModuleInfo(int index,CameraModuleInfo moduleInfo);
     bool AddModuleInfo(CameraModuleInfo moduleInfo);
-    CameraModuleInfo getProfile(ConnectedInfo connInfo);
-    bool updateProfile(std::vector <cv::VideoCapture> cameras);
+    bool UpdateProfile(std::vector <cv::VideoCapture> cameras);
+    CameraModuleInfo GetProfile(ConnectedInfo connInfo);
+    bool SetProfile(int camera_id,CameraModuleInfo moduleInfo);
+
     bool UpdateDefaultProfile(std::vector <cv::VideoCapture> cameras);
-    CameraModuleInfo GetDefaultModuleInfo();
+    CameraModuleInfo GetDefaultProfile(int port_num, std::string camera_type);
+    CameraModuleInfo GetDefaultProfile(int camera_id);
+    bool SetDefaultProfile(int camera_id,CameraModuleInfo moduleInfo);
+    bool InitDefaultProfile();
+
+    bool SaveProfileAsDefault(std::vector<CameraModuleInfo> moduleInfo);
+    const int SETTING_ALL_CAMERA_ID = -1;
+
     
 };
 //CameraModuleSetting* CameraModuleSetting::instance = nullptr;

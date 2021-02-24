@@ -17,8 +17,14 @@ terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
     this->QOS = _QOS;
     this->user_id = _user_id;
     this->topic = _topic;
+    cond = PTHREAD_COND_INITIALIZER;
+    mutex = PTHREAD_MUTEX_INITIALIZER;
 }
 
+terminal::~terminal(){
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&cond);
+}
 // send taken pictures to remote server using http protocol
 size_t noop_cb(void *ptr, size_t size, size_t nmemb, void *data) {
     return size * nmemb;
@@ -125,14 +131,18 @@ void terminal::initialize_mqtt_client() {
     } catch (const mqtt::exception &exc) {
         std::cerr << exc.what() << std::endl;
     }
-
+    
     cli.set_message_callback([this](mqtt::const_message_ptr msg) {
             std::string json = std::string(msg->to_string());
+            
             rapidjson::Document d;
             d.Parse(json.c_str());
             std::string type = d["type"].GetString();
             event = type;
             event_payload = json;
+            pthread_mutex_lock(&mutex);
+            pthread_cond_signal(&cond);
+            pthread_mutex_unlock(&mutex);
     });
 
     try {
@@ -328,8 +338,11 @@ void terminal::start_daemon() {
 
 void terminal::callback_rpc() {
     std::string res_form;
-    while(true){
-        usleep(5000);
+    while(true)
+    {
+        pthread_mutex_lock(&mutex);
+        pthread_cond_wait(&cond,&mutex);
+        log.print_log("received signal");
         if (event == "open_door") {
             if (is_ready()) {
                 
@@ -403,6 +416,7 @@ void terminal::callback_rpc() {
             clear_event_data();
         } else if(event == "camera_module_set"){
             log.print_log("received camera_module_set");
+            log.print_log(event_payload);
             if(operate_camera_module_set(event_payload)){
                 res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "camera_module_set success", true);
                 log.print_log("send camera_module_set success");
@@ -421,6 +435,7 @@ void terminal::callback_rpc() {
             mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_UPDATE);
             clear_event_data();
         } else if (event == "terminate") {
+            pthread_mutex_unlock(&mutex);
             break;
         }else if(event != "NONE"){
             log.print_log("received unkonwn command");
@@ -428,7 +443,7 @@ void terminal::callback_rpc() {
             log.print_log(event);
 
         }
-        
+        pthread_mutex_unlock(&mutex);
     }
     
 }
