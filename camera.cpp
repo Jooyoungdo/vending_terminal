@@ -40,14 +40,21 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
                 std::string str = entry.path().string();
                 if (std::regex_search(str, match, re, std::regex_constants::match_default)){
 
-                    CameraModuleInfo module;
-                    module.connected_info.camera_id = camera_capture.size();
-                    module.connected_info.port_num = std::stoi(match[1].str());
-                    //FIXME: hardcoded code should be changed if mipi camera is used  
-                    module.connected_info.interface_type = "USB";
+                    // CameraModuleInfo module;
+                    // module.connected_info.camera_id = camera_capture.size();
+                    // module.connected_info.port_num = std::stoi(match[1].str());
+                    // //FIXME: hardcoded code should be changed if mipi camera is used  
+                    // module.connected_info.interface_type = "USB";
+                    // module.aec=true;
+                    // module.awb=true;
+                    // module.color_temperature=5000;
+                    // module.exposure_time = 0;
+                    // module.frame_width =1920;
+                    // module.frame_height =1080;
                     log.print_log( "camera device found on port number :" + match[1].str());
                     // if camera_capture size is 0, camera id is 0 
-                    //CameraModuleInfo module = cameraModuleSetting->GetDefaultProfile(port_num,"USB");
+                    int port_num = std::stoi(match[1].str());
+                    CameraModuleInfo module = cameraModuleSetting->GetDefaultProfile(port_num,"USB");
                     cameraModuleSetting->AddModuleInfo(module);
                     
                     //cv::VideoCapture _cap(prefix_path + match.str(), cv::CAP_V4L);
@@ -182,10 +189,13 @@ bool camera::set_module_profile(std::string json){
     int module_count = cameraModuleSetting->GetModuleinfoCount();
     if(!jsonData["camera_id"].IsNull() && jsonData["camera_id"].GetInt() < module_count){
         int camera_id = jsonData["camera_id"].GetInt();
+
+        // module name / interface type / camera location / port number is not changed 
+        module.module_name = cameraModuleSetting->GetProfileList()[camera_id].module_name;
+        module.connected_info.interface_type = cameraModuleSetting->GetProfileList()[camera_id].connected_info.interface_type;
+        module.connected_info.camera_location = cameraModuleSetting->GetProfileList()[camera_id].connected_info.camera_location;
+        module.connected_info.port_num = cameraModuleSetting->GetProfileList()[camera_id].connected_info.port_num;
         
-        module.module_name = jsonData["module_name"].GetString();
-        module.connected_info.interface_type = jsonData["interface_type"].GetString();
-        module.connected_info.camera_location = jsonData["camera_location"].GetString();
         module.connected_info.camera_id = jsonData["camera_id"].GetInt();
         module.exposure_time = jsonData["exposure_time"].GetInt();
         module.aec = jsonData["aec"].GetBool();
