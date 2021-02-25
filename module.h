@@ -7,6 +7,11 @@
 
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/ostreamwrapper.h"
+#include <fstream>
 #include <opencv2/opencv.hpp>
 #include "logger.h"
 
@@ -73,7 +78,10 @@ public:
     CameraModuleInfo GetDefaultProfile(int camera_id);
     bool SetDefaultProfile(int camera_id,CameraModuleInfo moduleInfo);
     bool InitDefaultProfile();
-
+    bool ReadJsonFile(std::string file_name, std::vector<CameraModuleInfo>* moduleinfo_list);
+    bool WriteJsonFile(std::string file_name, std::vector<CameraModuleInfo> moduleinfo_list);
+    std::vector<CameraModuleInfo> ConvertJsonToModuleinfoList(rapidjson::Document *json_doc);
+    rapidjson::Document ConvertModuleinfoListToJson(std::vector<CameraModuleInfo> moduleInfo);
     bool SaveProfileAsDefault(std::vector<CameraModuleInfo> moduleInfo);
     const int SETTING_ALL_CAMERA_ID = -1;
 

@@ -4,6 +4,7 @@ CameraModuleSetting* CameraModuleSetting::instance = nullptr;
 
 CameraModuleSetting::CameraModuleSetting(){
     //moduleinfo_list.resize(MAX_CAMERA_COUNT);
+    ReadJsonFile("/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/camera_module_settings.json",&moduleinfo_list);
     InitDefaultProfile();
 }
 
@@ -230,8 +231,73 @@ CameraModuleSetting* CameraModuleSetting::GetInstance(){
     return instance;
 }
 
+bool CameraModuleSetting::ReadJsonFile(std::string file_name,std::vector<CameraModuleInfo>* moduleinfo_list){
 
+    std::ifstream input_file_stream(file_name);
+    if(!input_file_stream){
+        return false;
+    }
+    rapidjson::IStreamWrapper input_stream_wrapper(input_file_stream);
+    
+    rapidjson::Document json_doc;
+    json_doc.ParseStream(input_stream_wrapper);
+    try {
+        *moduleinfo_list = ConvertJsonToModuleinfoList(&json_doc);
+    } catch (int error) {
+        log.print_log(("CATCH")); 
+    }
+    return true; 
+}
 
+bool CameraModuleSetting::WriteJsonFile(std::string file_name,std::vector<CameraModuleInfo> moduleinfo_list){
+    rapidjson::Document json_doc;
+    json_doc = ConvertModuleinfoListToJson(moduleinfo_list);
+    std::ofstream output_stream(file_name);
+    if(!output_stream){
+        return false;
+    }
+
+    rapidjson::OStreamWrapper output_stream_wrapper(output_stream);
+    rapidjson::Writer<rapidjson::OStreamWrapper> writer(output_stream_wrapper);
+    json_doc.Accept(writer);
+    return true;
+}
+
+std::vector<CameraModuleInfo> CameraModuleSetting::ConvertJsonToModuleinfoList(rapidjson::Document *json_doc){
+    std::vector<CameraModuleInfo> module_infos;
+    // TODO:여기까진 동작 함 , 확인은 해야 함, 방어 코드 추가 해야 함!!!!!!!
+    for (auto& json_data : json_doc->GetArray()){
+        CameraModuleInfo module_info;
+        module_info.connected_info.camera_id = json_data["camera_id"].GetInt();
+        module_info.connected_info.port_num = json_data["port_num"].GetInt();
+        module_info.connected_info.camera_location = json_data["camera_location"].GetString();
+        module_info.connected_info.interface_type = json_data["interface_type"].GetString();
+        module_info.awb = json_data["awb"].GetBool();
+        module_info.aec = json_data["aec"].GetBool();
+        module_info.color_temperature=json_data["color_temperature"].GetInt();
+        module_info.exposure_time=json_data["exposure_time"].GetInt();
+        module_info.frame_height=json_data["frame_height"].GetInt();
+        module_info.frame_width=json_data["frame_width"].GetInt();
+        module_info.module_name=json_data["module_name"].GetString();
+        module_infos.push_back(module_info);
+    }
+    return module_infos;
+}
+rapidjson::Document CameraModuleSetting::ConvertModuleinfoListToJson(std::vector<CameraModuleInfo> moduleInfo){
+    rapidjson::Document json_doc;
+    // rapidjson::AllocatorType& allocator = json_doc.GetAllocator();
+    
+    // for(int i=0;i<moduleInfo.size();i++){
+    //     rapidjson::Value v1(moduleInfo[0]);
+    //     json_doc.SetObject(CameraModuleInfo).PushBack(v1,allocator);
+    //     //json_doc.SetObject(CameraModuleInfo).push_back(v1,allocator);
+    // }
+    
+    // Value v2(v1, allocator);                      // make a copy
+    // //TODO: 구현 
+
+    return json_doc;
+}
 // bool CameraModuleSetting::IsSameModuleInfo(CameraModuleInfo read,CameraModuleInfo saved){
 //     moduleInfo_read.connected_info.camera_id
 //     moduleinfo_list.push_back(moduleInfo);
