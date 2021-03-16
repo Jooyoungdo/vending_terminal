@@ -101,8 +101,11 @@ void doorLock::get_states(){
         this->door.seekg(0);
         this->lock.seekg(0);
         this->trigger.seekg(0);
-
-        this->status = lock_status(4*this->lock_value + 2*this->door_value + this->trigger_value);
+        if(target_board.compare("FIREFLY") == 0){
+            this->status = lock_status(4*this->lock_value + 2*this->door_value + this->trigger_value);
+        }else if(target_board.compare("DEEPTHINK") == 0){
+            this->status = lock_status(4*this->lock_value + 2*this->door_value + this->trigger_value+ 8);
+        }
     } catch (int e) {
         log.print_log("DoorLock get state Error!");
     }
@@ -141,7 +144,7 @@ bool doorLock::door_close(){
 // wait until doorLock state is in UNLOCK and OPEN
 bool doorLock::wait_open(){
     get_states();
-    while (this->status != UNLOCK_OPEN){
+    while (this->status != FIREFLY_UNLOCK_OPEN && this->status !=DEEPTHINK_UNLOCK_OPEN){
         get_states();
         usleep(1000);
     }
@@ -152,7 +155,7 @@ bool doorLock::wait_open(){
 // wait until doorLock state is in UNLOCK and CLOSE
 bool doorLock::wait_close() {
     get_states();
-    while (this->status != UNLOCK_CLOSE){
+    while (this->status != FIREFLY_UNLOCK_CLOSE && this->status !=DEEPTHINK_UNLOCK_CLOSE){
         get_states();
         usleep(1000);
     }
@@ -163,7 +166,7 @@ bool doorLock::wait_close() {
 // wait until doorLock state is in READY STATE (LOCK CLOSE)
 bool doorLock::is_ready() {
     get_states();
-    if (this->status == WAIT)
+    if (this->status == FIREFLY_WAIT || this->status ==DEEPTHINK_UNLOCK_OPEN)
         return true;
     else{
         log.print_log("door already open");
