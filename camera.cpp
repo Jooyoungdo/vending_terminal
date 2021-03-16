@@ -16,9 +16,13 @@ camera::camera(){
     camera_capture.push_back(_cap);
 }
 
-camera::camera(std::string mode, std::string prefix_path, std::string regex_grammer) {
+camera::camera(std::string mode) {
 
     char* string_buffer;
+    std::string regex_grammer[] ={"platform-fe3c0000.usb-usb-0:1.(\\d):1.0-video-index0",
+                                    "platform-fe380000.usb-usb-0:1.(\\d):1.0-video-index0"};
+    std::string prefix_path = "/dev/v4l/by-path/" ;
+    
     // if mode is not in auto detect, call default initializer
     std::cout << mode  << std::endl;
     cameraModuleSetting = CameraModuleSetting::GetInstance();
@@ -32,28 +36,45 @@ camera::camera(std::string mode, std::string prefix_path, std::string regex_gram
         camera_capture.push_back(_cap);
     }
     else {
-        std::regex re (regex_grammer.c_str());
-        std::smatch match;
+
 
         if(std::experimental::filesystem::is_directory(prefix_path.c_str())){
             for (auto & entry : std::experimental::filesystem::directory_iterator(prefix_path.c_str())){
                 std::string str = entry.path().string();
+                std::regex re (regex_grammer[0].c_str());
+                std::smatch match;
                 if (std::regex_search(str, match, re, std::regex_constants::match_default)){
 
-                    // CameraModuleInfo module;
-                    // module.connected_info.camera_id = camera_capture.size();
-                    // module.connected_info.port_num = std::stoi(match[1].str());
-                    // //FIXME: hardcoded code should be changed if mipi camera is used  
-                    // module.connected_info.interface_type = "USB";
-                    // module.aec=true;
-                    // module.awb=true;
-                    // module.color_temperature=5000;
-                    // module.exposure_time = 0;
-                    // module.frame_width =1920;
-                    // module.frame_height =1080;
+
+                    //FIXME: hardcoded code should be changed if mipi camera is used  
                     log.print_log( "camera device found on port number :" + match[1].str());
-                    // if camera_capture size is 0, camera id is 0 
+
                     int port_num = std::stoi(match[1].str());
+                    CameraModuleInfo module = cameraModuleSetting->GetDefaultProfile(port_num,"USB");
+                    cameraModuleSetting->AddModuleInfo(module);
+                    
+                    //cv::VideoCapture _cap(prefix_path + match.str(), cv::CAP_V4L);
+    //                _cap.open(());
+#ifdef OLD_OPENCV
+                    camera_capture.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), CV_CAP_V4L));
+#else
+                    camera_capture.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), cv::CAP_V4L));
+#endif
+
+                }
+            }
+            // this is only for deepthink board, it has 10 usb port
+            for (auto & entry : std::experimental::filesystem::directory_iterator(prefix_path.c_str())){
+                std::string str = entry.path().string();
+                std::regex re (regex_grammer[1].c_str());
+                std::smatch match;
+                if (std::regex_search(str, match, re, std::regex_constants::match_default)){
+
+
+                    //FIXME: hardcoded code should be changed if mipi camera is used  
+                    log.print_log( "camera device found on port number :" + match[1].str());
+
+                    int port_num = std::stoi(match[1].str()) + 5 ;
                     CameraModuleInfo module = cameraModuleSetting->GetDefaultProfile(port_num,"USB");
                     cameraModuleSetting->AddModuleInfo(module);
                     
@@ -177,9 +198,7 @@ bool camera::save_frame(std::string _PATH){
 }
 
 int camera::get_image_count() {
-
     return camera_capture.size();
-
 }
 
 bool camera::set_module_profile(std::string json){

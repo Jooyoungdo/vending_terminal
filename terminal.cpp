@@ -10,7 +10,7 @@ terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
         sub3(cli, MQTT_SERVER_TOPIC_UPDATER_PREFIX+_topic, _QOS),
         // pub1(cli, MQTT_TOPIC_DEVICE_OPERATION, _QOS),
         // pub2(cli, MQTT_TOPIC_DEVICE_UPDATE, _QOS),
-        camera("auto_detect", "/dev/v4l/by-path/", "platform-fe3c0000.usb-usb-0:1.(\\d):1.0-video-index0"),
+        camera("auto_detect"),
 //        camera(camera_index, num),
         doorLock(target_board)
 {

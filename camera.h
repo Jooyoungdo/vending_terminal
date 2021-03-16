@@ -28,7 +28,7 @@ private:
     logger log = logger("CAMERA"); //logger object for print log
 public:
     camera(); //defualt initializer, deprecated
-    camera(std::string mode, std::string prefix_path, std::string regex_grammer);
+    camera(std::string mode);
     camera(int* camera_index, int num); // initializer with number of camera device and it's index. registrate all camera devices
     
     bool grab_frame(); // grab image from camera devices
