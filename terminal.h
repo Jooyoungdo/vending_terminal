@@ -47,6 +47,16 @@ private:
 
     const std::string MQTT_SERVER_TOPIC_DEVICE_PREFIX = "DEVICE_";
     const std::string MQTT_SERVER_TOPIC_UPDATER_PREFIX = "UPDATER_";
+    const std::string MQTT_SERVER_TOPIC_REMOTE_PREFIX = "REMOTE_";
+    
+    const std::string MQTT_MESSAGE_TYPE_OPEN_DOOR = "open_door";
+    const std::string MQTT_MESSAGE_TYPE_COLLECT_DATASET = "collect_dataset";
+    const std::string MQTT_MESSAGE_TYPE_GRAB_IMAGE = "grab_image";
+    const std::string MQTT_MESSAGE_TYPE_CAMERA_MODULE_SET = "camera_module_set";
+    const std::string MQTT_MESSAGE_TYPE_CAMERA_MODULE_GET = "camera_module_get";
+    const std::string MQTT_MESSAGE_TYPE_REACT_HUMAN = "react_human";
+    const std::string MQTT_MESSAGE_TYPE_TERMINATE = "terminate";
+
     // MQTT client QOS (will be modified)
     int QOS;
     // MQTT client options...
@@ -110,11 +120,14 @@ public:
 
     // upload image to database
     int64_t database_upload(cv::Mat iter, std::string env_id, std::string type);
-
     // operations of command from server
-    int operate_camera_module_set(std::string event_payload);
-    int operate_camera_module_get(std::string event_payload);
-    // std::string create_response_camera_module_set();
+    bool operate_camera_module_set(std::string event_payload);
+    bool operate_camera_module_get(std::string event_payload);
+    bool operate_play_sound(std::string event_payload);
+    bool operate_grab_image(std::string event_payload);
+    bool operate_collect_data(std::string event_payload);
+    bool operate_open_door(std::string event_payload);
+    
     void start_daemon();
     void callback_rpc();
     void clear_event_data();

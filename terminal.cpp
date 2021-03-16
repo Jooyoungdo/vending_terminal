@@ -138,9 +138,9 @@ void terminal::initialize_mqtt_client() {
             rapidjson::Document d;
             d.Parse(json.c_str());
             std::string type = d["type"].GetString();
+            pthread_mutex_lock(&mutex);
             event = type;
             event_payload = json;
-            pthread_mutex_lock(&mutex);
             pthread_cond_signal(&cond);
             pthread_mutex_unlock(&mutex);
     });
@@ -343,140 +343,160 @@ void terminal::callback_rpc() {
         pthread_mutex_lock(&mutex);
         pthread_cond_wait(&cond,&mutex);
         log.print_log("received signal");
-        if (event == "open_door") {
-            if (is_ready()) {
-                
-                grab_frame();
-                save_frame("/home/changseok/Desktop/");
-                if (post_image(event_payload))
-                    res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", true);
-                else
-                    res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", false);
-                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-
-                if (door_open())
-                    res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", true);
-                else
-                    res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", false);
-                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-
-                if (wait_open())
-                    wait_close();
-                else {
-                    log.print_log("");
-                }
-
-                if (door_close())
-                    res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door", true);
-                else
-                    res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door",
-                                                    false);
-                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-
-                grab_frame();
-                save_frame("/home/changseok/Desktop/");
-
-                std::regex re("\"type\":\"open_door\"");
-                event_payload = std::regex_replace(event_payload, re, "\"type\":\"close_door\"");
-
-                if (post_image(event_payload))
-                    res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", true);
-                else
-                    res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", false);
-                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-            }
+        if (event == MQTT_MESSAGE_TYPE_OPEN_DOOR) {
+            operate_open_door(event_payload);
             clear_event_data();
-        } else if (event == "collect_dataset") {
-            rapidjson::Document d;
-            d.Parse(event_payload.c_str());
-            int64_t image_id;
-            if (is_ready()){
-                door_open();
-                wait_open();
-                wait_close();
-                door_close();
-                grab_frame();
-                std::vector<cv::Mat> images = get_frame();
-                std::vector<cv::Mat>::iterator iter;
-
-                for(iter = images.begin(); iter != images.end(); iter++){
-                    image_id = database_upload(*iter, d["env_id"].GetString(), d["image_type"].GetString());
-                }
-                res_form = create_response_form(event_payload, "ack", "", std::to_string(image_id), true);
-                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-            } else {
-                res_form = create_response_form(event_payload, "ack", "", "", false);
-                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-            }
+        } else if (event == MQTT_MESSAGE_TYPE_COLLECT_DATASET) {
+            operate_collect_data(event_payload);
             clear_event_data();
-        } else if (event == "grab_image") {
-            grab_frame();
-            save_frame("/home/changseok/Desktop/");
-            post_image(event_payload);
+        } else if (event == MQTT_MESSAGE_TYPE_GRAB_IMAGE) {
+            operate_grab_image(event_payload);
             clear_event_data();
-        } else if(event == "camera_module_set"){
-            log.print_log("received camera_module_set");
-            log.print_log(event_payload);
-            if(operate_camera_module_set(event_payload)){
-                res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "camera_module_set success", true);
-                log.print_log("send camera_module_set success");
-            }else{
-                res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "camera_module_set fail", false);
-                log.print_log("send camera_module_set fail");
-            }
-            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_UPDATE);
+        } else if(event == MQTT_MESSAGE_TYPE_CAMERA_MODULE_SET){
+            operate_camera_module_set(event_payload);
             clear_event_data();
-        }else if(event == "camera_module_get"){
-            if(operate_camera_module_get(event_payload)){
-                res_form = create_response_form(event_payload, "camera_module_get_resp", "camera_module_get", "camera_module_get success", true);
-            }else{
-                res_form = create_response_form(event_payload, "camera_module_get_resp", "camera_module_get", "camera_module_get fail", false);
-            }
-            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_UPDATE);
+        }else if(event == MQTT_MESSAGE_TYPE_CAMERA_MODULE_GET){
+            operate_camera_module_get(event_payload);
             clear_event_data();
-        } else if (event == "terminate") {
+        } else if (event == MQTT_MESSAGE_TYPE_TERMINATE) {
             pthread_mutex_unlock(&mutex);
             break;
+        } else if (event == MQTT_MESSAGE_TYPE_REACT_HUMAN) {
+            operate_play_sound(event_payload);
+            clear_event_data();
         }else if(event != "NONE"){
             log.print_log("received unkonwn command");
-            clear_event_data();
             log.print_log(event);
-
+            clear_event_data();
         }
         pthread_mutex_unlock(&mutex);
     }
     
 }
 
-int terminal::operate_camera_module_set(std::string event_payload){
+bool terminal::operate_camera_module_set(std::string event_payload){
+    std::string res_form;
 
-    if(!set_module_profile(event_payload)) 
+    if(!set_module_profile(event_payload)){
+        res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "set_module_profile fail", false);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_UPDATE);
         return false;
-    if(!update_module_profile()) 
+    }
+    if(!update_module_profile()){
+        res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "update_module_profile fail", false);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_UPDATE);
         return false;
+    }
+
+    res_form = create_response_form(event_payload, "camera_module_set_resp", "camera_module_set", "operate_camera_module_set success", true);
+    mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_UPDATE);    
 
     return true;
 }
 
-int terminal::operate_camera_module_get(std::string event_payload){
-    rapidjson::Document json_data;
-    json_data.Parse(event_payload.c_str());
+bool terminal::operate_camera_module_get(std::string event_payload){
+    // rapidjson::Document json_data;
+    // json_data.Parse(event_payload.c_str());
+    std::string res_form;
     // TODO: module 정보 가져가는 부분 구현 필요
+    if(true){
+        res_form = create_response_form(event_payload, "camera_module_get_resp", "camera_module_get", "camera_module_get success", true);
+    }
+    else{
+        res_form = create_response_form(event_payload, "camera_module_get_resp", "camera_module_get", "camera_module_get fail", false);
+    }
+    mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_UPDATE);
 
     return true;
 }
 
-// int terminal::operate_grab_image(std::string event_payload){
-// }
+bool terminal::operate_play_sound(std::string event_payload){
+    //TODO: sound play 기능 구현
+    // sound play 동작은 response 보낼 필요 없음
+    return true;
+}
 
-// int terminal::operate_collect_data(std::string event_payload){
-// }
+bool terminal::operate_grab_image(std::string event_payload){
+     grab_frame();
+     save_frame("/home/changseok/Desktop/");
+     post_image(event_payload);
+     return true;
+}
+bool terminal::operate_collect_data(std::string event_payload){
+    rapidjson::Document d;
+    std::string res_form;
+    d.Parse(event_payload.c_str());
+    int64_t image_id;
+    if (is_ready())
+    {
+        door_open();
+        wait_open();
+        wait_close();
+        door_close();
+        grab_frame();
+        std::vector<cv::Mat> images = get_frame();
+        std::vector<cv::Mat>::iterator iter;
 
-// int terminal::operate_open_door(std::string event_payload){
-// }
+        for (iter = images.begin(); iter != images.end(); iter++)
+        {
+            image_id = database_upload(*iter, d["env_id"].GetString(), d["image_type"].GetString());
+        }
+        res_form = create_response_form(event_payload, "ack", "", std::to_string(image_id), true);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+    }
+    else
+    {
+        res_form = create_response_form(event_payload, "ack", "", "", false);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+        return false;
+    }
+    return true;
+}
 
-// int terminal::operate_close_door(std::string event_payload){
-// }
+bool terminal::operate_open_door(std::string event_payload){
+    std::string res_form;
+    if (is_ready()){
+        grab_frame();
+        save_frame("/home/changseok/Desktop/");
+        //TODO: 사진 촬영 실패하더라도 문 여는 동작하도록 되어 있음, 이거 나중에 문제 될 가능성 있음
+        // 실패 처리를 해야 될 듯
+        if (post_image(event_payload))
+            res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", true);
+        else
+            res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", false);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+
+        if (door_open())
+            res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", true);
+        else
+            res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", false);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+
+        if (wait_open())
+            wait_close();
+
+        if (door_close())
+            res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door", true);
+        else
+            res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door",false);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+
+        grab_frame();
+        save_frame("/home/changseok/Desktop/");
+
+        std::regex re("\"type\":\"open_door\"");
+        event_payload = std::regex_replace(event_payload, re, "\"type\":\"close_door\"");
+        if (post_image(event_payload))
+            res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", true);
+        else
+            res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", false);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+    }else{
+        return false;
+    }
+
+    return true;
+}
 
 void terminal::clear_event_data(){
     event = "NONE";
