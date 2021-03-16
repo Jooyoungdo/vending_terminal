@@ -2,10 +2,16 @@
 #include "terminal.h"
 #include "debug.h"
 
+
+std::string get_target_board_name(){
+    //TODO: 하드코딩된 부분을 디바이스 정보를 읽어서 구현하는 방식으로 해야 함
+    return "DEEPTHINK";
+}
+
 // Door lock controll pin numbers.. (up to device setting)
-#define LOCK_SENSOR 42
-#define DOOR_SENSOR 39
-#define LOCK_TRIGGER 12
+
+
+
 
 /*
  * argument vector lists : sudo ./daemon_process [device_id] [cam count] [cam device numbers ....] [ip address]
@@ -26,9 +32,9 @@ int main(int argc, char** argv) {
 #endif
     
     
-
+    std::string target_board= get_target_board_name();
     //create terminal object and initialize mqtt, MySQl
-    terminal T(broker_ip, 0, device_id, device_id, LOCK_SENSOR, DOOR_SENSOR, LOCK_TRIGGER);
+    terminal T(broker_ip, 0, device_id, device_id, target_board);
     T.initialize_mqtt_client();
 #ifndef DEBUG_BAIVE    
     T.initialize_MySQL_connector();

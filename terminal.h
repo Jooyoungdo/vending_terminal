@@ -99,8 +99,12 @@ private:
 
 public:
     // terminal class initiaizer, also initialize all inherited classes.
-    terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic, int lock, int door, int trigger);
+    terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic,std::string target_board);
     ~terminal();
+
+    const std::string TARGET_BOARD_FIREFLY = "FIREFLY";
+    const std::string TARGET_BOARD_DEEPTHINK = "DEEPTHINK";
+
     // initialize MQTT client, all publisher & subscriber
     void initialize_mqtt_client();
     //initialize MYSQL database
@@ -127,11 +131,10 @@ public:
     bool operate_grab_image(std::string event_payload);
     bool operate_collect_data(std::string event_payload);
     bool operate_open_door(std::string event_payload);
-    
+    bool open_close_door(std::string event_payload,bool do_resonpse);
     void start_daemon();
     void callback_rpc();
     void clear_event_data();
-
 };
 
 #endif //DAEMON_PROCESS_TERMINAL_H

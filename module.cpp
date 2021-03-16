@@ -4,6 +4,7 @@ CameraModuleSetting* CameraModuleSetting::instance = nullptr;
 
 CameraModuleSetting::CameraModuleSetting(){
     //moduleinfo_list.resize(MAX_CAMERA_COUNT);
+    //TODO: change hardcoding path
     ReadJsonFile("/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/camera_module_settings.json",&moduleinfo_list);
     InitDefaultProfile();
 }

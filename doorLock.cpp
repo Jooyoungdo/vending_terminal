@@ -11,70 +11,14 @@ doorLock::doorLock(){
 }
 
 //door lock class initializer, gets GPIO pin number of lock, door sensors and door lock trigger
-doorLock::doorLock(int lock, int door, int trigger){
+doorLock::doorLock(std::string target_board){
     log.print_log("door lock initialize ... ");
-    this->door_num = door;
-    this->lock_num = lock;
-    this->trigger_num = trigger;
-
-    // create pin
-    std::fstream pin_ctr;
-    pin_ctr.open("/sys/class/gpio/export", std::ios::out);
-    if (!pin_ctr.is_open()){
-        log.print_log("\ncan not open file \"/sys/class/gpio/export\" please check again");
-#ifdef DEBUG_BAIVE
-        log.print_log("DEBUG_BAIVE ");
-        return;        
-#else
-        std::exit(1);
-#endif        
+    this->target_board = target_board;
+    if(target_board.compare("FIREFLY") == 0 ){
+        init_firefly_doorlock_gpios();
+    }else if(target_board.compare("DEEPTHINK") == 0 ){
+        init_deepthink_doorlock_gpios();
     }
-
-    pin_ctr << this->trigger_num;
-    pin_ctr.seekg(0);
-    pin_ctr << this->door_num;
-    pin_ctr.seekg(0);
-    pin_ctr << this->lock_num;
-    pin_ctr.seekg(0);
-    pin_ctr.close();
-
-    // set direction
-    char query[50];
-    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->trigger_num);
-    pin_ctr.open(query);
-    pin_ctr << "out";
-    pin_ctr.close();
-
-    query[0] = 0;
-    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->door_num);
-    pin_ctr.open(query);
-    pin_ctr << "in";
-    pin_ctr.close();
-
-    query[0] = 0;
-    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->lock_num);
-    pin_ctr.open(query);
-    pin_ctr << "in";
-    pin_ctr.close();
-
-    // assign pin
-    query[0] = 0;
-    sprintf(query, "/sys/class/gpio/gpio%d/value", this->trigger_num);
-    this->trigger.open(query);
-    query[0] = 0;
-    sprintf(query, "/sys/class/gpio/gpio%d/value", this->door_num);
-    this->door.open(query);
-    query[0] = 0;
-    sprintf(query, "/sys/class/gpio/gpio%d/value", this->lock_num);
-    this->lock.open(query);
-
-    log.print_log("DONE");
-
-    // default state : lock
-    this->trigger << "1";
-    this->trigger.seekg(0);
-
-
 }
 
 // doorLock class destroyer, release all pin FDs...
@@ -226,4 +170,151 @@ bool doorLock::is_ready() {
         return false;
     }
 
+}
+
+bool doorLock::init_deepthink_doorlock_gpios(){
+    //set deepthink doorlock gpio numbers
+    this->door_num = DEEPTHINK_DOOR_SENSOR_GPIO;
+    this->lock_num = DEEPTHINK_LOCK_SENSOR_GPIO;
+    this->trigger_num = DEEPTHINK_LOCK_TRIGGER_GPIO;
+    this->door_power_value = DEEPTHINK_POWER_GPIO;
+
+    // create pin
+    std::fstream pin_ctr;
+    pin_ctr.open("/sys/class/gpio/export", std::ios::out);
+    if (!pin_ctr.is_open()){
+        log.print_log("\ncan not open file \"/sys/class/gpio/export\" please check again");
+#ifdef DEBUG_BAIVE
+        log.print_log("DEBUG_BAIVE ");
+        return true;        
+#else
+        std::exit(1);
+#endif        
+    }
+
+    pin_ctr << this->trigger_num;
+    pin_ctr.seekg(0);
+    pin_ctr << this->door_num;
+    pin_ctr.seekg(0);
+    pin_ctr << this->lock_num;
+    pin_ctr.seekg(0);
+    pin_ctr << this->door_power_num;
+    pin_ctr.seekg(0);
+    pin_ctr.close();
+
+    // set direction
+    char query[50];
+    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->trigger_num);
+    pin_ctr.open(query);
+    pin_ctr << "out";
+    pin_ctr.close();
+
+    query[50];
+    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->door_power_num);
+    pin_ctr.open(query);
+    pin_ctr << "out";
+    pin_ctr.close();
+
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->door_num);
+    pin_ctr.open(query);
+    pin_ctr << "in";
+    pin_ctr.close();
+
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->lock_num);
+    pin_ctr.open(query);
+    pin_ctr << "in";
+    pin_ctr.close();
+
+    // assign pin
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/value", this->trigger_num);
+    this->trigger.open(query);
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/value", this->door_power_num);
+    this->door_power.open(query);
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/value", this->door_num);
+    this->door.open(query);
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/value", this->lock_num);
+    this->lock.open(query);
+
+    log.print_log("DONE");
+
+    // default state : lock
+    this->trigger << "0";
+    this->trigger.seekg(0);
+    this->door_power << "1";
+    this->door_power.seekg(0);
+
+    return true;
+}
+
+bool doorLock::init_firefly_doorlock_gpios(){
+
+    //set firefly doorlock gpio numbers
+    this->door_num = FIREFLY_DOOR_SENSOR_GPIO;
+    this->lock_num = FIREFLY_LOCK_SENSOR_GPIO;
+    this->trigger_num = FIREFLY_LOCK_TRIGGER_GPIO;
+
+    // create pin
+    std::fstream pin_ctr;
+    pin_ctr.open("/sys/class/gpio/export", std::ios::out);
+    if (!pin_ctr.is_open()){
+        log.print_log("\ncan not open file \"/sys/class/gpio/export\" please check again");
+#ifdef DEBUG_BAIVE
+        log.print_log("DEBUG_BAIVE ");
+        return true;       
+#else
+        std::exit(1);
+#endif        
+    }
+
+    pin_ctr << this->trigger_num;
+    pin_ctr.seekg(0);
+    pin_ctr << this->door_num;
+    pin_ctr.seekg(0);
+    pin_ctr << this->lock_num;
+    pin_ctr.seekg(0);
+    pin_ctr.close();
+
+    // set direction
+    char query[50];
+    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->trigger_num);
+    pin_ctr.open(query);
+    pin_ctr << "out";
+    pin_ctr.close();
+
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->door_num);
+    pin_ctr.open(query);
+    pin_ctr << "in";
+    pin_ctr.close();
+
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/direction", this->lock_num);
+    pin_ctr.open(query);
+    pin_ctr << "in";
+    pin_ctr.close();
+
+    // assign pin
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/value", this->trigger_num);
+    this->trigger.open(query);
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/value", this->door_num);
+    this->door.open(query);
+    query[0] = 0;
+    sprintf(query, "/sys/class/gpio/gpio%d/value", this->lock_num);
+    this->lock.open(query);
+
+    log.print_log("DONE");
+
+    // default state : lock
+    this->trigger << "1";
+    this->trigger.seekg(0);
+
+    return true;
 }

@@ -2,7 +2,7 @@
 
 // terminal class initializer which initialize all inherited classes
 terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
-        std::string _user_id, std::string _topic, int lock, int door, int trigger):
+        std::string _user_id, std::string _topic,std::string target_board):
         SERVER_ADDRESS(_SERVER_ADDRESS),
         cli(SERVER_ADDRESS, "DEVICE_"+_user_id),
         sub1(cli, _topic, _QOS),
@@ -12,7 +12,7 @@ terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
         // pub2(cli, MQTT_TOPIC_DEVICE_UPDATE, _QOS),
         camera("auto_detect", "/dev/v4l/by-path/", "platform-fe3c0000.usb-usb-0:1.(\\d):1.0-video-index0"),
 //        camera(camera_index, num),
-        doorLock(lock, door, trigger)
+        doorLock(target_board)
 {
     this->QOS = _QOS;
     this->user_id = _user_id;
@@ -429,10 +429,7 @@ bool terminal::operate_collect_data(std::string event_payload){
     int64_t image_id;
     if (is_ready())
     {
-        door_open();
-        wait_open();
-        wait_close();
-        door_close();
+        open_close_door(event_payload,false);
         grab_frame();
         std::vector<cv::Mat> images = get_frame();
         std::vector<cv::Mat>::iterator iter;
@@ -466,21 +463,7 @@ bool terminal::operate_open_door(std::string event_payload){
             res_form = create_response_form(event_payload, "image_upload", "open_door", "image_upload", false);
         mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
 
-        if (door_open())
-            res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", true);
-        else
-            res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", false);
-        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-
-        if (wait_open())
-            wait_close();
-
-        if (door_close())
-            res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door", true);
-        else
-            res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door",false);
-        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-
+        open_close_door(event_payload,true);    
         grab_frame();
         save_frame("/home/changseok/Desktop/");
 
@@ -495,6 +478,53 @@ bool terminal::operate_open_door(std::string event_payload){
         return false;
     }
 
+    return true;
+}
+
+bool terminal::open_close_door(std::string event_payload,bool do_response){
+    int result = false;
+    std::string res_form;
+    /*
+        date   : 2021-03-16
+        author : YeongDo Ju
+        description
+        - firefly and deepthink has different operation ordor of doorlock
+        - doorlock(firefly) : active low
+          open_door() -> wait_open() -> wait_close() -> close_door()
+        - doorlock(deepthink) : active high
+          open_door() -> wait_open() -> close_door() -> wait_close()
+    */
+    if(target_board.compare(TARGET_BOARD_DEEPTHINK)==0){
+        result = door_open();
+        if(do_response){
+            res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", result);
+            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+        }   
+        if (wait_open()){
+            result = door_close();
+            wait_close();
+            if (do_response){
+                res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door", result);
+                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+            }
+        }
+    }else if(target_board.compare(TARGET_BOARD_FIREFLY)==0){
+        result = door_open();
+        if(do_response){
+            res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", result);
+            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+        }   
+        if (wait_open())
+            wait_close();
+        result = door_close();    
+        if(do_response){
+            res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door", result);
+            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+        }
+    }else{
+        log.print_log("known target board name");    
+        return false;
+    }
     return true;
 }
 
