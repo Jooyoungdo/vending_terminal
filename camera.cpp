@@ -72,9 +72,9 @@ camera::camera(std::string mode) {
 
 
                     //FIXME: hardcoded code should be changed if mipi camera is used  
-                    log.print_log( "camera device found on port number :" + match[1].str());
-
                     int port_num = std::stoi(match[1].str()) + 5 ;
+                    log.print_log( "camera device found on port number :" + std::to_string(port_num));
+                    
                     CameraModuleInfo module = cameraModuleSetting->GetDefaultProfile(port_num,"USB");
                     cameraModuleSetting->AddModuleInfo(module);
                     
