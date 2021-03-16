@@ -484,47 +484,19 @@ bool terminal::operate_open_door(std::string event_payload){
 bool terminal::open_close_door(std::string event_payload,bool do_response){
     int result = false;
     std::string res_form;
-    /*
-        date   : 2021-03-16
-        author : YeongDo Ju
-        description
-        - firefly and deepthink has different operation ordor of doorlock
-        - doorlock(firefly) : active low
-          open_door() -> wait_open() -> wait_close() -> close_door()
-        - doorlock(deepthink) : active high
-          open_door() -> wait_open() -> close_door() -> wait_close()
-    */
-    if(target_board.compare(TARGET_BOARD_DEEPTHINK)==0){
-        result = door_open();
-        if(do_response){
-            res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", result);
-            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-        }   
-        if (wait_open()){
-            result = door_close();
-            wait_close();
-            if (do_response){
-                res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door", result);
-                mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-            }
-        }
-    }else if(target_board.compare(TARGET_BOARD_FIREFLY)==0){
-        result = door_open();
-        if(do_response){
-            res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", result);
-            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-        }   
-        if (wait_open())
-            wait_close();
-        result = door_close();    
-        if(do_response){
-            res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door", result);
-            mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
-        }
-    }else{
-        log.print_log("known target board name");    
-        return false;
+    result = door_open();
+    if (do_response){
+        res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", result);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
     }
+    if (wait_open())
+        wait_close();
+    result = door_close();
+    if (do_response){
+        res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door", result);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
+    }
+
     return true;
 }
 

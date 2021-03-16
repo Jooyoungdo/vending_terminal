@@ -14,7 +14,9 @@ doorLock::doorLock(){
 doorLock::doorLock(std::string target_board){
     log.print_log("door lock initialize ... ");
     this->target_board = target_board;
+    
     if(target_board.compare("FIREFLY") == 0 ){
+
         init_firefly_doorlock_gpios();
     }else if(target_board.compare("DEEPTHINK") == 0 ){
         init_deepthink_doorlock_gpios();
@@ -116,9 +118,15 @@ void doorLock::get_states(){
 // unlock doorLock trigger
 bool doorLock::door_open(){
     try{
-        log.print_log("UNLOCK");
-        this->trigger << "0";
-        this->trigger.seekg(0);
+        if(target_board.compare("FIREFLY") == 0 ){
+            log.print_log("UNLOCK");
+            this->trigger << "0";
+            this->trigger.seekg(0);    
+        }else if(target_board.compare("DEEPTHINK") == 0 ){
+            log.print_log("UNLOCK");
+            this->trigger << "1";
+            this->trigger.seekg(0);    
+        }
     } catch (int e) {
         log.print_log("UNLOCK FAILURE");
         return false;
@@ -129,10 +137,16 @@ bool doorLock::door_open(){
 
 // lock doorLock trigger
 bool doorLock::door_close(){
-    try{
-        log.print_log("LOCK");
-        this->trigger << "1";
-        this->trigger.seekg(0);
+     try{
+        if(target_board.compare("FIREFLY") == 0 ){
+            log.print_log("LOCK");
+            this->trigger << "1";
+            this->trigger.seekg(0);    
+        }else if(target_board.compare("DEEPTHINK") == 0 ){
+            log.print_log("LOCK");
+            this->trigger << "0";
+            this->trigger.seekg(0);    
+        }
     } catch (int e) {
         log.print_log("LOCK FAILURE");
         return false;
@@ -147,6 +161,8 @@ bool doorLock::wait_open(){
     while (this->status != FIREFLY_UNLOCK_OPEN && this->status !=DEEPTHINK_UNLOCK_OPEN){
         get_states();
         usleep(1000);
+        // log.print_log("wait_open");
+        // log.print_log(std::to_string(this->status));
     }
     log.print_log("OPEN");
     return true;
@@ -158,6 +174,8 @@ bool doorLock::wait_close() {
     while (this->status != FIREFLY_UNLOCK_CLOSE && this->status !=DEEPTHINK_UNLOCK_CLOSE){
         get_states();
         usleep(1000);
+        // log.print_log("wait_close");
+        // log.print_log(std::to_string(this->status));
     }
     log.print_log("CLOSE");
     return true;
@@ -166,10 +184,11 @@ bool doorLock::wait_close() {
 // wait until doorLock state is in READY STATE (LOCK CLOSE)
 bool doorLock::is_ready() {
     get_states();
-    if (this->status == FIREFLY_WAIT || this->status ==DEEPTHINK_UNLOCK_OPEN)
+    if (this->status == FIREFLY_WAIT || this->status ==DEEPTHINK_WAIT)
         return true;
     else{
         log.print_log("door already open");
+        log.print_log(std::to_string(this->status));
         return false;
     }
 
