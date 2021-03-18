@@ -23,17 +23,17 @@ void AudioManager::DestroyInstance(void){
 	}
 }
 
-void AudioManager::Initialize(unsigned int rate,int channels){
+void AudioManager::Initialize(std::string pcm_device,snd_pcm_format_t format,unsigned int rate,int channels){
 	unsigned int pcm, tmp, dir;
 	
 
 	//rate = 192000
 	//channels = 1
 	//seconds = depends on sound track
-	unsigned int bit_rate = rate;
-
+	
+	//pcm_device "default"
 	/* Open the PCM device in playback mode */
-	if (pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE,
+	if (pcm = snd_pcm_open(&pcm_handle, pcm_device.c_str(),
 					SND_PCM_STREAM_PLAYBACK, 0) < 0) 
 		printf("ERROR: Can't open \"%s\" PCM device. %s\n",
 					PCM_DEVICE, snd_strerror(pcm));
@@ -42,20 +42,20 @@ void AudioManager::Initialize(unsigned int rate,int channels){
 	snd_pcm_hw_params_alloca(&params);
 
 	snd_pcm_hw_params_any(pcm_handle, params);
-
+	//format = SND_PCM_FORMAT_S16_LE;
 	/* Set parameters */
 	if (pcm = snd_pcm_hw_params_set_access(pcm_handle, params,
 					SND_PCM_ACCESS_RW_INTERLEAVED) < 0) 
 		printf("ERROR: Can't set interleaved mode. %s\n", snd_strerror(pcm));
 
 	if (pcm = snd_pcm_hw_params_set_format(pcm_handle, params,
-						SND_PCM_FORMAT_S16_LE) < 0) 
+						format) < 0) 
 		printf("ERROR: Can't set format. %s\n", snd_strerror(pcm));
 
 	if (pcm = snd_pcm_hw_params_set_channels(pcm_handle, params, channels) < 0) 
 		printf("ERROR: Can't set channels number. %s\n", snd_strerror(pcm));
 
-	if (pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &bit_rate, 0) < 0) 
+	if (pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0) < 0) 
 		printf("ERROR: Can't set rate. %s\n", snd_strerror(pcm));
 
 	/* Write parameters */
@@ -64,19 +64,8 @@ void AudioManager::Initialize(unsigned int rate,int channels){
 
 	/* Resume information */
 	printf("PCM name: '%s'\n", snd_pcm_name(pcm_handle));
-
 	printf("PCM state: %s\n", snd_pcm_state_name(snd_pcm_state(pcm_handle)));
 
-	snd_pcm_hw_params_get_channels(params, &tmp);
-	printf("channels: %i ", tmp);
-
-	if (tmp == 1)
-		printf("(mono)\n");
-	else if (tmp == 2)
-		printf("(stereo)\n");
-
-	snd_pcm_hw_params_get_rate(params, &tmp, 0);
-	printf("rate: %d bps\n", tmp);
 
 	return;
 }
@@ -90,24 +79,30 @@ void AudioManager::Shutdown(void){
 	}
 }
 
-void AudioManager::PlaySound(std::string sound_name,int channels,int seconds){
+void AudioManager::PlaySound(std::string sound_name){
 	char *buff;
 	int buff_size, loops;
 	unsigned int tmp;
 	unsigned int pcm;
 	snd_pcm_uframes_t frames;
+	//TODO:fix seconds
+	int seconds = 1;
 	/* Allocate buffer to hold single period */
-
+	std::string sound_file_path = GetSoundFileRoot() + sound_name;
 	snd_pcm_hw_params_get_period_size(params, &frames, 0);
 	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
 	snd_pcm_hw_params_get_channels(params, &tmp);
 
-	buff_size = frames * channels * 2 /* 2 -> sample size */;
+	buff_size = frames * SOUND_CHANNEL * 2 /* 2 -> sample size */;
 	//buff = (char *) malloc(buff_size);
 	buff = new char(buff_size);
 
 
-	int fd = open(sound_name.c_str(),O_RDONLY);
+	int fd = open(sound_file_path.c_str(),O_RDONLY);
+	if(fd < 0){
+		printf("Audio File is not Exist\n");
+		return;
+	}
 	for (loops = (seconds * 1000000) / tmp; loops > 0; loops--){
 		if (pcm = read(fd, buff, buff_size) == 0){
 			printf("Early end of file.\n");
@@ -138,4 +133,9 @@ void AudioManager::StopSound(){
 
 void AudioManager::SetSpeakerVolume(float volume){
 
+}
+
+std::string AudioManager::GetSoundFileRoot(){
+	//TODO: fix hardcoding path
+	return "/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/sound/";
 }

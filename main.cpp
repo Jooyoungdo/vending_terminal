@@ -39,8 +39,8 @@ int main(int argc, char** argv) {
     // }
     // return 0;
     AudioManager* audio= AudioManager::GetInstance();
-    audio->Initialize(19200,1);
-    audio->PlaySound("/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/sound/close_voice.wav",1,1);
+    audio->Initialize("default", SND_PCM_FORMAT_S16_LE, audio->SAMPLE_RATE, audio->SOUND_CHANNEL);
+    audio->PlaySound("close_voice.wav");
     
     std::string target_board= get_target_board_name();
     //create terminal object and initialize mqtt, MySQl
