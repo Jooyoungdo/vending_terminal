@@ -1,8 +1,8 @@
 #include <iostream>
 #include "terminal.h"
 #include "debug.h"
-
-
+#include <stdlib.h>
+#include "sound_manager.h"
 std::string get_target_board_name(){
     //TODO: 하드코딩된 부분을 디바이스 정보를 읽어서 구현하는 방식으로 해야 함
     return "DEEPTHINK";
@@ -30,7 +30,17 @@ int main(int argc, char** argv) {
     std::string device_id = argv[1];
     std::string broker_ip = argv[argc-1];
 #endif
+    // int buff_size = 1000;
+    // char buff[1000];
+    // read(0, buff, buff_size);
     
+    // for(int i =0 ;i<1000;i++){
+    //     std::cout << buff[i];
+    // }
+    // return 0;
+    AudioManager* audio= AudioManager::GetInstance();
+    audio->Initialize(19200,1);
+    audio->PlaySound("/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/sound/close_voice.wav",1,1);
     
     std::string target_board= get_target_board_name();
     //create terminal object and initialize mqtt, MySQl

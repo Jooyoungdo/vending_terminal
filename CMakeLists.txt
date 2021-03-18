@@ -6,8 +6,8 @@ set(PAHO_CPP_LIB paho-mqttpp3)
 set(PAHO_C_LIB paho-mqtt3a)
 
 find_package( OpenCV REQUIRED )
-add_executable(daemon_process main.cpp doorLock.cpp doorLock.h camera.cpp camera.h terminal.cpp terminal.h logger.cpp logger.h module.cpp module.h debug.h)
-target_link_libraries( daemon_process ${OpenCV_LIBS} ${PAHO_C_LIB} ${PAHO_CPP_LIB} pthread curl mysqlclient stdc++fs)
+add_executable(daemon_process main.cpp doorLock.cpp doorLock.h camera.cpp camera.h terminal.cpp terminal.h logger.cpp logger.h module.cpp module.h debug.h sound_manager.cpp sound_manager.h)
+target_link_libraries( daemon_process ${OpenCV_LIBS} ${PAHO_C_LIB} ${PAHO_CPP_LIB} pthread curl mysqlclient stdc++fs asound)
 
 add_definitions(-DOPENSSL)
 
