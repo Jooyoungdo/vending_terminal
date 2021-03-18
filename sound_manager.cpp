@@ -83,7 +83,6 @@ void AudioManager::Initialize(unsigned int rate,int channels){
 
 // Shutdown sound components
 void AudioManager::Shutdown(void){
-	
 	if(pcm_handle !=nullptr){
 		snd_pcm_drain(pcm_handle);
 		snd_pcm_close(pcm_handle);
@@ -91,7 +90,6 @@ void AudioManager::Shutdown(void){
 	}
 }
 
-#define TEST_SOUND
 void AudioManager::PlaySound(std::string sound_name,int channels,int seconds){
 	char *buff;
 	int buff_size, loops;
@@ -100,14 +98,10 @@ void AudioManager::PlaySound(std::string sound_name,int channels,int seconds){
 	snd_pcm_uframes_t frames;
 	/* Allocate buffer to hold single period */
 
-#ifndef TEST_SOUND
-	// snd_pcm_hw_params_get_period_size(params, &frames, 0);
-	// snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
-	// snd_pcm_hw_params_get_channels(params, &tmp);
-#else
-	frames=1000;
-	tmp = 1;
-#endif	
+	snd_pcm_hw_params_get_period_size(params, &frames, 0);
+	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
+	snd_pcm_hw_params_get_channels(params, &tmp);
+
 	buff_size = frames * channels * 2 /* 2 -> sample size */;
 	//buff = (char *) malloc(buff_size);
 	buff = new char(buff_size);
@@ -134,6 +128,8 @@ void AudioManager::PlaySound(std::string sound_name,int channels,int seconds){
 	{
 		delete buff;
 	}
+	close(fd);
+	return;
 }
 void AudioManager::StopSound(){
 	//TODO 기능 구현
