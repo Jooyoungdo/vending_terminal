@@ -98,12 +98,15 @@ private:
 
     pthread_cond_t cond;
     pthread_mutex_t mutex;
+    bool terminate_program = false;
 
 public:
     // terminal class initiaizer, also initialize all inherited classes.
     terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic,std::string target_board);
     ~terminal();
-
+    
+    void exit_program(bool exit);
+    bool is_exit_program();
     const std::string TARGET_BOARD_FIREFLY = "FIREFLY";
     const std::string TARGET_BOARD_DEEPTHINK = "DEEPTHINK";
 

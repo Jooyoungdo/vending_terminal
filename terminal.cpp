@@ -338,37 +338,32 @@ void terminal::start_daemon() {
 
 void terminal::callback_rpc() {
     std::string res_form;
-    while(true)
+    while(!is_exit_program())
     {
         pthread_mutex_lock(&mutex);
         pthread_cond_wait(&cond,&mutex);
         log.print_log("received signal");
         if (event == MQTT_MESSAGE_TYPE_OPEN_DOOR) {
             operate_open_door(event_payload);
-            clear_event_data();
         } else if (event == MQTT_MESSAGE_TYPE_COLLECT_DATASET) {
             operate_collect_data(event_payload);
-            clear_event_data();
         } else if (event == MQTT_MESSAGE_TYPE_GRAB_IMAGE) {
             operate_grab_image(event_payload);
-            clear_event_data();
         } else if(event == MQTT_MESSAGE_TYPE_CAMERA_MODULE_SET){
             operate_camera_module_set(event_payload);
-            clear_event_data();
         }else if(event == MQTT_MESSAGE_TYPE_CAMERA_MODULE_GET){
             operate_camera_module_get(event_payload);
-            clear_event_data();
         } else if (event == MQTT_MESSAGE_TYPE_TERMINATE) {
             pthread_mutex_unlock(&mutex);
+            clear_event_data();
             break;
         } else if (event == MQTT_MESSAGE_TYPE_REACT_HUMAN) {
             operate_play_sound(event_payload);
-            clear_event_data();
         }else if(event != "NONE"){
             log.print_log("received unkonwn command");
             log.print_log(event);
-            clear_event_data();
         }
+        clear_event_data();
         pthread_mutex_unlock(&mutex);
     }
     
@@ -505,6 +500,17 @@ bool terminal::open_close_door(std::string event_payload,bool do_response){
     }
 
     return true;
+}
+
+void terminal::exit_program(bool exit){
+    terminate_program = exit;
+    if(exit){
+        pthread_cond_signal(&cond);
+    }
+}
+
+bool terminal::is_exit_program(){
+    return terminate_program;
 }
 
 void terminal::clear_event_data(){

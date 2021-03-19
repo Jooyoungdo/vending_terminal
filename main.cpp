@@ -10,9 +10,6 @@ std::string get_target_board_name(){
 
 // Door lock controll pin numbers.. (up to device setting)
 
-
-
-
 /*
  * argument vector lists : sudo ./daemon_process [device_id] [cam count] [cam device numbers ....] [ip address]
  */
@@ -43,10 +40,12 @@ int main(int argc, char** argv) {
     T.start_daemon();
 
     //start vending terminal until q pressed
-    std::cout << "||||||||||||[START BEYLESS VENDING TERMINAL]||||||||||||" << std::endl;
+    //std::cout << "||||||||||||[START BEYLESS VENDING TERMINAL]||||||||||||" << std::endl;
+    std::cout << "Start Baive Terminal Program..." << std::endl;
     std::cout << "press 'q' to exit" << std::endl;
-    while(std::tolower(std::cin.get()) != 'q')
-        ;
+    while(std::tolower(std::cin.get()) != 'q');
+    T.exit_program(true);
+    std::cout << "Exit Baive Terminal Program..." << std::endl;
 
     return 0;
 }
