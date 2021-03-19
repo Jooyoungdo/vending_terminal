@@ -484,7 +484,11 @@ bool terminal::operate_open_door(std::string event_payload){
 bool terminal::open_close_door(std::string event_payload,bool do_response){
     int result = false;
     std::string res_form;
+    AudioManager* audio_manager = AudioManager::GetInstance();
     result = door_open();
+    if(result){
+        audio_manager->PlaySound(SOUND_TYPE_OPEN);
+    }
     if (do_response){
         res_form = create_response_form(event_payload, "door_open_close", "open_door", "open_door", result);
         mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
@@ -492,6 +496,9 @@ bool terminal::open_close_door(std::string event_payload,bool do_response){
     if (wait_open())
         wait_close();
     result = door_close();
+     if(result){
+        audio_manager->PlaySound(SOUND_TYPE_CLOSE);
+    }
     if (do_response){
         res_form = create_response_form(event_payload, "door_open_close", "close_door", "close_door", result);
         mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);

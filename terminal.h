@@ -25,6 +25,8 @@
 #include <mysql/mysql.h>
 #include <pthread.h>
 
+#include "sound_manager.h"
+
 #define DAEMON_PROCESS_TERMINAL_H
 
 class terminal : public camera, public doorLock
