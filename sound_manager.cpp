@@ -23,17 +23,90 @@ void AudioManager::DestroyInstance(void){
 	}
 }
 
-void AudioManager::Initialize(std::string pcm_device,snd_pcm_format_t format,unsigned int rate,int channels){
-	unsigned int pcm, tmp, dir;
-	
+// Shutdown sound components
+void AudioManager::Shutdown(void){
+	if(pcm_handle !=nullptr){
+		snd_pcm_drain(pcm_handle);
+		snd_pcm_close(pcm_handle);
+		pcm_handle = nullptr;
+	}
+}
 
-	//rate = 192000
-	//channels = 1
-	//seconds = depends on sound track
-	
-	//pcm_device "default"
+void AudioManager::StopSound(){
+	//TODO 기능 구현
+
+}
+
+void AudioManager::SetSpeakerVolume(float volume){
+
+}
+
+
+std::string AudioManager::GetSoundFileRoot(){
+	//TODO: fix hardcoding path
+	return "/home/firefly/beyless_vending_terminal/sound/";
+}
+
+bool AudioManager::PlaySound(SOUND_TYPE sound_type){
+
+	switch (sound_type)
+	{
+	case SOUND_TYPE_OPEN:
+		PlayOpenSound();
+		break;
+	case SOUND_TYPE_CLOSE:
+		PlayCloseSound();
+		break;
+	case SOUND_TYPE_GREETING:
+		PlayGreetingSound();
+		break;		
+	default:
+		return false;
+		break;
+	}
+	return true;
+}
+
+void AudioManager::PlayOpenSound(){
+	AudioFileInfo audio = {
+		GetSoundFileRoot()+"open_voice.wav",
+		AudioManager::OPEN_VOICE_SEC,
+		AudioManager::SOUND_FORMAT,
+		AudioManager::BIT_RATE,
+		AudioManager::SOUND_CHANNEL};
+	Play(audio);
+	return;
+}
+void AudioManager::PlayCloseSound(){
+	AudioFileInfo audio = {
+		GetSoundFileRoot()+"close_voice.wav",
+		AudioManager::CLOSE_VOICE_SEC,
+		AudioManager::SOUND_FORMAT,
+		AudioManager::BIT_RATE,
+		AudioManager::SOUND_CHANNEL};
+	Play(audio);
+	return;
+}
+void AudioManager::PlayGreetingSound(){
+	AudioFileInfo audio = {
+		GetSoundFileRoot()+"greeting_voice.wav",
+		AudioManager::GREETING_VOICE_SEC,
+		AudioManager::SOUND_FORMAT,
+		AudioManager::BIT_RATE,
+		AudioManager::SOUND_CHANNEL};
+	Play(audio);
+	return;
+}
+
+void AudioManager::Play(AudioFileInfo sound_file_info){
+	unsigned int pcm, tmp, dir;
+	char *buff;
+	int buff_size, loops;
+	snd_pcm_uframes_t frames;
+    snd_pcm_hw_params_t *params;
+
 	/* Open the PCM device in playback mode */
-	if (pcm = snd_pcm_open(&pcm_handle, pcm_device.c_str(),
+	if (pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE.c_str(),
 					SND_PCM_STREAM_PLAYBACK, 0) < 0) 
 		printf("ERROR: Can't open \"%s\" PCM device. %s\n",
 					PCM_DEVICE, snd_strerror(pcm));
@@ -49,13 +122,13 @@ void AudioManager::Initialize(std::string pcm_device,snd_pcm_format_t format,uns
 		printf("ERROR: Can't set interleaved mode. %s\n", snd_strerror(pcm));
 
 	if (pcm = snd_pcm_hw_params_set_format(pcm_handle, params,
-						format) < 0) 
+						sound_file_info.format) < 0) 
 		printf("ERROR: Can't set format. %s\n", snd_strerror(pcm));
 
-	if (pcm = snd_pcm_hw_params_set_channels(pcm_handle, params, channels) < 0) 
+	if (pcm = snd_pcm_hw_params_set_channels(pcm_handle, params, sound_file_info.channels) < 0) 
 		printf("ERROR: Can't set channels number. %s\n", snd_strerror(pcm));
 
-	if (pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &rate, 0) < 0) 
+	if (pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &sound_file_info.bit_rate, 0) < 0) 
 		printf("ERROR: Can't set rate. %s\n", snd_strerror(pcm));
 
 	/* Write parameters */
@@ -66,76 +139,54 @@ void AudioManager::Initialize(std::string pcm_device,snd_pcm_format_t format,uns
 	printf("PCM name: '%s'\n", snd_pcm_name(pcm_handle));
 	printf("PCM state: %s\n", snd_pcm_state_name(snd_pcm_state(pcm_handle)));
 
-
-	return;
-}
-
-// Shutdown sound components
-void AudioManager::Shutdown(void){
-	if(pcm_handle !=nullptr){
-		snd_pcm_drain(pcm_handle);
-		snd_pcm_close(pcm_handle);
-		pcm_handle = nullptr;
-	}
-}
-
-void AudioManager::PlaySound(std::string sound_name){
-	char *buff;
-	int buff_size, loops;
-	unsigned int tmp;
-	unsigned int pcm;
-	snd_pcm_uframes_t frames;
-	//TODO:fix seconds
-	int seconds = 1;
-	/* Allocate buffer to hold single period */
-	std::string sound_file_path = GetSoundFileRoot() + sound_name;
-	snd_pcm_hw_params_get_period_size(params, &frames, 0);
-	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
 	snd_pcm_hw_params_get_channels(params, &tmp);
+	printf("channels: %i ", tmp);
 
-	buff_size = frames * SOUND_CHANNEL * 2 /* 2 -> sample size */;
-	//buff = (char *) malloc(buff_size);
-	buff = new char(buff_size);
+	if (tmp == 1)
+		printf("(mono)\n");
+	else if (tmp == 2)
+		printf("(stereo)\n");
 
+	snd_pcm_hw_params_get_rate(params, &tmp, 0);
+	printf("rate: %d bps\n", tmp);
 
-	int fd = open(sound_file_path.c_str(),O_RDONLY);
-	if(fd < 0){
-		printf("Audio File is not Exist\n");
+	printf("seconds: %f\n", sound_file_info.play_seconds);	
+
+	/* Allocate buffer to hold single period */
+	snd_pcm_hw_params_get_period_size(params, &frames, 0);
+
+	buff_size = frames * sound_file_info.channels * 2 /* 2 -> sample size */;
+	buff = (char *) malloc(buff_size);
+
+	snd_pcm_hw_params_get_period_time(params, &tmp, NULL);
+	//std::string sound_file_path = GetSoundFileRoot() + sound_name;
+	int fd = open(sound_file_info.file_path.c_str(),O_RDONLY);
+	if(fd < 0 ){
+		printf("file is not exist\n");
+		goto FUNC_END;
 		return;
 	}
-	for (loops = (seconds * 1000000) / tmp; loops > 0; loops--){
-		if (pcm = read(fd, buff, buff_size) == 0){
+	for (loops = (sound_file_info.play_seconds * 1000000) / tmp; loops > 0; loops--) {
+		
+		if (pcm = read(fd, buff, buff_size) == 0) {
 			printf("Early end of file.\n");
-			if(buff !=nullptr){
-				delete buff;
-			}
-			return;
+			goto FUNC_END;
+			//return;
 		}
-		if (pcm = snd_pcm_writei(pcm_handle, buff, frames) == -EPIPE){
+		if (pcm = snd_pcm_writei(pcm_handle, buff, frames) == -EPIPE) {
 			printf("XRUN.\n");
 			snd_pcm_prepare(pcm_handle);
-		}
-		else if (pcm < 0){
+		} else if (pcm < 0) {
 			printf("ERROR. Can't write to PCM device. %s\n", snd_strerror(pcm));
 		}
 	}
-	if (buff != nullptr)
-	{
-		delete buff;
+FUNC_END:
+	if(buff != NULL){
+		free(buff);
 	}
-	close(fd);
+	if(pcm_handle != NULL){
+		snd_pcm_drain(pcm_handle);
+		snd_pcm_close(pcm_handle);
+	}
 	return;
-}
-void AudioManager::StopSound(){
-	//TODO 기능 구현
-
-}
-
-void AudioManager::SetSpeakerVolume(float volume){
-
-}
-
-std::string AudioManager::GetSoundFileRoot(){
-	//TODO: fix hardcoding path
-	return "/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/sound/";
 }

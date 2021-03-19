@@ -30,19 +30,9 @@ int main(int argc, char** argv) {
     std::string device_id = argv[1];
     std::string broker_ip = argv[argc-1];
 #endif
-    // int buff_size = 1000;
-    // char buff[1000];
-    // read(0, buff, buff_size);
-    
-    // for(int i =0 ;i<1000;i++){
-    //     std::cout << buff[i];
-    // }
-    // return 0;
-    AudioManager* audio= AudioManager::GetInstance();
-    audio->Initialize("default", SND_PCM_FORMAT_S16_LE, audio->SAMPLE_RATE, audio->SOUND_CHANNEL);
-    audio->PlaySound("close_voice.wav");
-    
+    //get board info
     std::string target_board= get_target_board_name();
+
     //create terminal object and initialize mqtt, MySQl
     terminal T(broker_ip, 0, device_id, device_id, target_board);
     T.initialize_mqtt_client();
