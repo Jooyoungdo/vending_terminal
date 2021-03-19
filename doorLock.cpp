@@ -199,7 +199,7 @@ bool doorLock::init_deepthink_doorlock_gpios(){
     this->door_num = DEEPTHINK_DOOR_SENSOR_GPIO;
     this->lock_num = DEEPTHINK_LOCK_SENSOR_GPIO;
     this->trigger_num = DEEPTHINK_LOCK_TRIGGER_GPIO;
-    this->door_power_value = DEEPTHINK_POWER_GPIO;
+    this->door_power_num = DEEPTHINK_POWER_GPIO;
 
     // create pin
     std::fstream pin_ctr;
