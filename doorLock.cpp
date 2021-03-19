@@ -65,26 +65,26 @@ void doorLock::reset_pins(){
     pin_ctr << "out";
     pin_ctr.close();
 
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/direction", this->door_num);
     pin_ctr.open(query);
     pin_ctr << "in";
     pin_ctr.close();
 
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/direction", this->lock_num);
     pin_ctr.open(query);
     pin_ctr << "in";
     pin_ctr.close();
 
     // assign pin
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->trigger_num);
     this->trigger.open(query);
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->door_num);
     this->door.open(query);
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->lock_num);
     this->lock.open(query);
 
@@ -231,35 +231,35 @@ bool doorLock::init_deepthink_doorlock_gpios(){
     pin_ctr << "out";
     pin_ctr.close();
 
-    query[50];
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/direction", this->door_power_num);
     pin_ctr.open(query);
     pin_ctr << "out";
     pin_ctr.close();
 
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/direction", this->door_num);
     pin_ctr.open(query);
     pin_ctr << "in";
     pin_ctr.close();
 
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/direction", this->lock_num);
     pin_ctr.open(query);
     pin_ctr << "in";
     pin_ctr.close();
 
     // assign pin
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->trigger_num);
     this->trigger.open(query);
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->door_power_num);
     this->door_power.open(query);
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->door_num);
     this->door.open(query);
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->lock_num);
     this->lock.open(query);
 
@@ -309,26 +309,26 @@ bool doorLock::init_firefly_doorlock_gpios(){
     pin_ctr << "out";
     pin_ctr.close();
 
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/direction", this->door_num);
     pin_ctr.open(query);
     pin_ctr << "in";
     pin_ctr.close();
 
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/direction", this->lock_num);
     pin_ctr.open(query);
     pin_ctr << "in";
     pin_ctr.close();
 
     // assign pin
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->trigger_num);
     this->trigger.open(query);
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->door_num);
     this->door.open(query);
-    query[0] = 0;
+    memset(query, 0,sizeof(query));
     sprintf(query, "/sys/class/gpio/gpio%d/value", this->lock_num);
     this->lock.open(query);
 

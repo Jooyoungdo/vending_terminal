@@ -13,6 +13,7 @@
 #include <ctime>
 #include "debug.h"
 #include "logger.h"
+#include <memory.h>
 #define DAEMON_PROCESS_DOORLOCK_H
 
 
