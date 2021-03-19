@@ -35,7 +35,7 @@ public:
     static AudioManager* GetInstance(void);
     
     void StopSound();
-    void SetSpeakerVolume(float volume);
+    void SetSpeakerVolume(long volume_percent);
     static void DestroyInstance(void);
     bool PlaySound(SOUND_TYPE sound_type);
     
