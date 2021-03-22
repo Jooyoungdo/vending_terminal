@@ -39,12 +39,24 @@ void AudioManager::StopSound(){
 
 void AudioManager::SetSpeakerVolume(long volume_percent){
 	long min, max;
-    snd_mixer_t *handle;
+    snd_mixer_t *handle=NULL;
     snd_mixer_selem_id_t *sid;
     const char *card = "default";
+	int card_number = -1;
     //const char *selem_name = "Master";
 
     snd_mixer_open(&handle, 0);
+	if(handle == NULL){
+		log.print_log("open mixer fail");
+		return;
+	}
+
+	if(GetSoundCardCount() <= 0){
+		log.print_log("sound card is not exist");
+		return;
+	}
+		
+	
     snd_mixer_attach(handle, card);
     snd_mixer_selem_register(handle, NULL, NULL);
     snd_mixer_load(handle);
@@ -56,8 +68,6 @@ void AudioManager::SetSpeakerVolume(long volume_percent){
     snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
 
     snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
-	printf("min : %d\n",min);
-	printf("max : %d\n",max);
     snd_mixer_selem_set_playback_volume_all(elem, volume_percent * max / 100);
 
     snd_mixer_close(handle);
@@ -129,10 +139,9 @@ void AudioManager::Play(AudioFileInfo sound_file_info){
     snd_pcm_hw_params_t *params;
 
 	/* Open the PCM device in playback mode */
-	if (pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE.c_str(),
-					SND_PCM_STREAM_PLAYBACK, 0) < 0) 
-		printf("ERROR: Can't open \"%s\" PCM device. %s\n",
-					PCM_DEVICE, snd_strerror(pcm));
+	if (pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE.c_str(),SND_PCM_STREAM_PLAYBACK, 0) < 0){
+		log.print_log("ERROR: Can't open "+PCM_DEVICE+" PCM device. "+ std::string(snd_strerror(pcm)));						   
+	}
 
 	/* Allocate parameters object and fill it with default values*/
 	snd_pcm_hw_params_alloca(&params);
@@ -142,39 +151,23 @@ void AudioManager::Play(AudioFileInfo sound_file_info){
 	/* Set parameters */
 	if (pcm = snd_pcm_hw_params_set_access(pcm_handle, params,
 					SND_PCM_ACCESS_RW_INTERLEAVED) < 0) 
-		printf("ERROR: Can't set interleaved mode. %s\n", snd_strerror(pcm));
+		log.print_log("ERROR: Can't set interleaved mode \n"+ std::string(snd_strerror(pcm)));
 
 	if (pcm = snd_pcm_hw_params_set_format(pcm_handle, params,
 						sound_file_info.format) < 0) 
-		printf("ERROR: Can't set format. %s\n", snd_strerror(pcm));
+		log.print_log("ERROR: Can't set format. %s\n"+ std::string(snd_strerror(pcm)));
 
 	if (pcm = snd_pcm_hw_params_set_channels(pcm_handle, params, sound_file_info.channels) < 0) 
-		printf("ERROR: Can't set channels number. %s\n", snd_strerror(pcm));
+		log.print_log("ERROR: Can't set channels number. %s\n"+ std::string(snd_strerror(pcm)));
 
 	if (pcm = snd_pcm_hw_params_set_rate_near(pcm_handle, params, &sound_file_info.bit_rate, 0) < 0) 
-		printf("ERROR: Can't set rate. %s\n", snd_strerror(pcm));
+		log.print_log("ERROR: Can't set rate. %s\n"+ std::string(snd_strerror(pcm)));
 
 	/* Write parameters */
 	if (pcm = snd_pcm_hw_params(pcm_handle, params) < 0)
-		printf("ERROR: Can't set harware parameters. %s\n", snd_strerror(pcm));
-
-	/* Resume information */
-	printf("PCM name: '%s'\n", snd_pcm_name(pcm_handle));
-	printf("PCM state: %s\n", snd_pcm_state_name(snd_pcm_state(pcm_handle)));
-
+		log.print_log("ERROR: Can't set harware parameters. %s\n"+ std::string(snd_strerror(pcm)));
 	snd_pcm_hw_params_get_channels(params, &tmp);
-	printf("channels: %i ", tmp);
-
-	if (tmp == 1)
-		printf("(mono)\n");
-	else if (tmp == 2)
-		printf("(stereo)\n");
-
 	snd_pcm_hw_params_get_rate(params, &tmp, 0);
-	printf("rate: %d bps\n", tmp);
-
-	printf("seconds: %f\n", sound_file_info.play_seconds);	
-
 	/* Allocate buffer to hold single period */
 	snd_pcm_hw_params_get_period_size(params, &frames, 0);
 
@@ -185,22 +178,22 @@ void AudioManager::Play(AudioFileInfo sound_file_info){
 	//std::string sound_file_path = GetSoundFileRoot() + sound_name;
 	int fd = open(sound_file_info.file_path.c_str(),O_RDONLY);
 	if(fd < 0 ){
-		printf("file is not exist\n");
+		log.print_log("Sound File is not exist\n");
 		goto FUNC_END;
 		return;
 	}
 	for (loops = (sound_file_info.play_seconds * 1000000) / tmp; loops > 0; loops--) {
 		
 		if (pcm = read(fd, buff, buff_size) == 0) {
-			printf("Early end of file.\n");
+			log.print_log("Check Buffer Size\n");
 			goto FUNC_END;
 			//return;
 		}
 		if (pcm = snd_pcm_writei(pcm_handle, buff, frames) == -EPIPE) {
-			printf("XRUN.\n");
+			log.print_log("Playing Sound has problem\n");
 			snd_pcm_prepare(pcm_handle);
 		} else if (pcm < 0) {
-			printf("ERROR. Can't write to PCM device. %s\n", snd_strerror(pcm));
+			log.print_log("ERROR. Can't write to PCM device "+ std::string(snd_strerror(pcm)));
 		}
 	}
 FUNC_END:
@@ -212,4 +205,23 @@ FUNC_END:
 		snd_pcm_close(pcm_handle);
 	}
 	return;
+}
+
+int AudioManager::GetSoundCardCount(){
+	int total_cards = 0;   // No cards found yet
+    int card_num = -1;     // Start with first card
+    int err;
+	int max_sound_cards = 10;
+    for (int i =0 ; i< max_sound_cards;i++) {
+        // Get next sound card's card number.
+        if ((err = snd_card_next(&card_num)) < 0) {
+			log.print_log("Can't get the next card number: "+ std::string( snd_strerror(err)));
+            break;
+        }
+        if (card_num < 0)
+            break;
+        ++total_cards;   // Another card found, so bump the count
+    }
+    snd_config_update_free_global();
+	return total_cards;
 }
