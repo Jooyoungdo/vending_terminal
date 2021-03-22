@@ -226,7 +226,12 @@ std::string terminal::create_response_form(std::string json, std::string type, s
         if (input_form.HasMember(iter->c_str())){
             rapidjson::Value name;
             name.SetString((iter->c_str()), iter->length());
-            return_form.AddMember(name, input_form[iter->c_str()], allocator);
+            if (*iter == "type") {
+                return_form["type"].SetString(type.data(),type.size(),allocator);
+            }
+            else{
+                return_form.AddMember(name, input_form[iter->c_str()], allocator);
+            }
         } else {
             if (*iter == "msg") {
                 rapidjson::Value str_value;
@@ -240,26 +245,6 @@ std::string terminal::create_response_form(std::string json, std::string type, s
             }
         }
     }
-    //return_form.AddMember("type", type., allocator);???
-    //return_form["type"] = "open_door_resp";
-    return_form["type"].SetString(type.data(),type.size(),allocator);
-    // if(strstr(msg.c_str(),"open_door") != NULL){
-    //     return_form["type"] = "open_door_resp";
-    // }else if(strstr(msg.c_str(),"close_door") != NULL){
-    //     return_form["type"] = "close_door_resp";
-    // }else if(strstr(msg.c_str(),"camera_module_set") != NULL){
-    //     return_form["type"] = "camera_module_set_resp";
-    // }else if(strstr(msg.c_str(),"camera_module_get") != NULL){
-    //     return_form["type"] = "camera_module_get_resp";
-    // }
-    
-    // if (msg.find("open_door")>=0){
-    //     return_form["type"] = "open_door_resp";
-    // } else if (msg.find("close_door")>=0) {
-    //     return_form["type"] = "close_door_resp";
-    // }else if(msg.find("camera_module_set") >= 0){
-    //     return_form["type"] = "camera_module_set_resp";
-    // }
 
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
