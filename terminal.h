@@ -27,6 +27,9 @@
 
 #include "sound_manager.h"
 
+#include <openssl/md5.h>
+#include <unistd.h>
+
 #define DAEMON_PROCESS_TERMINAL_H
 
 class terminal : public camera, public doorLock
@@ -46,18 +49,24 @@ private:
     const std::string MQTT_CLIENT_TOPIC_DEVICE_IMAGE_UPLOAD = "device_image_upload";
     const std::string MQTT_CLIENT_TOPIC_DEVICE_OPERATION = "device_operation";
     const std::string MQTT_CLIENT_TOPIC_DEVICE_UPDATE = "device_update";
+    const std::string MQTT_CLIENT_TOPIC_DEVICE_REMOTE = "device_REMOTE";
 
     const std::string MQTT_SERVER_TOPIC_DEVICE_PREFIX = "DEVICE_";
     const std::string MQTT_SERVER_TOPIC_UPDATER_PREFIX = "UPDATER_";
     const std::string MQTT_SERVER_TOPIC_REMOTE_PREFIX = "REMOTE_";
+    const std::string MQTT_SERVER_TOPIC_AI_PREFIX = "AI_";
     
     const std::string MQTT_MESSAGE_TYPE_OPEN_DOOR = "open_door";
     const std::string MQTT_MESSAGE_TYPE_COLLECT_DATASET = "collect_dataset";
     const std::string MQTT_MESSAGE_TYPE_GRAB_IMAGE = "grab_image";
     const std::string MQTT_MESSAGE_TYPE_CAMERA_MODULE_SET = "camera_module_set";
     const std::string MQTT_MESSAGE_TYPE_CAMERA_MODULE_GET = "camera_module_get";
-    const std::string MQTT_MESSAGE_TYPE_REACT_HUMAN = "react_human";
+    const std::string MQTT_MESSAGE_TYPE_CUSTOMER_ATTRIBUTE = "customer_attribute";
     const std::string MQTT_MESSAGE_TYPE_TERMINATE = "terminate";
+    const std::string MQTT_MESSAGE_TYPE_SET_SOUND = "set_sound";
+    const std::string MQTT_MESSAGE_TYPE_DEVICE_FILE_DOWNLOAD = "file_download";
+
+    //std::string client_topics[]={};
 
     // MQTT client QOS (will be modified)
     int QOS;
@@ -72,6 +81,8 @@ private:
     mqtt::topic sub1;
     mqtt::topic sub2;
     mqtt::topic sub3;
+    mqtt::topic sub4;
+    std::vector<mqtt::topic> subjects;
     // mqtt::topic pub1;
     // mqtt::topic pub2;
 
@@ -125,21 +136,27 @@ public:
     bool post_image(std::string json);
 
     // create json type response form
-    std::string create_response_form(std::string json, std::string type, std::string stage, std::string msg, bool result);
+    std::string create_response_form(std::string json, std::string type, std::string msg, bool result);
+
+    // init json member depends on its type
+    std::vector<std::string> init_json_member(std::string type);
 
     // upload image to database
     int64_t database_upload(cv::Mat iter, std::string env_id, std::string type);
     // operations of command from server
     bool operate_camera_module_set(std::string event_payload);
     bool operate_camera_module_get(std::string event_payload);
-    bool operate_play_sound(std::string event_payload);
+    bool operate_customer_attribute(std::string event_payload);
+    bool operate_set_sound(std::string event_payload);
     bool operate_grab_image(std::string event_payload);
     bool operate_collect_data(std::string event_payload);
     bool operate_open_door(std::string event_payload);
+    bool operate_device_file_download(std::string event_payload);
     bool open_close_door(std::string event_payload,bool do_resonpse);
     void start_daemon();
     void callback_rpc();
     void clear_event_data();
+    bool donwload_file(std::string event_payload);
 };
 
 #endif //DAEMON_PROCESS_TERMINAL_H
