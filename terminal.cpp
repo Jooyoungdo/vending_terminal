@@ -140,18 +140,16 @@ void terminal::initialize_mqtt_client() {
     } catch (const mqtt::exception &exc) {
         std::cerr << exc.what() << std::endl;
     }
-    
+
     cli.set_message_callback([this](mqtt::const_message_ptr msg) {
-            std::string json = std::string(msg->to_string());
-            
-            rapidjson::Document d;
-            d.Parse(json.c_str());
-            std::string type = d["type"].GetString();
-            pthread_mutex_lock(&mutex);
-            event = type;
-            event_payload = json;
-            pthread_cond_signal(&cond);
-            pthread_mutex_unlock(&mutex);
+        std::string json = std::string(msg->to_string());
+        rapidjson::Document d;
+        d.Parse(json.c_str());
+        std::string type = d["type"].GetString();
+        log.print_log("push received event :" + type);
+        std::pair<std::string, std::string> received_event (type,json);
+        received_events.push(received_event);
+        pthread_cond_signal(&cond);
     });
 
     try {
@@ -343,42 +341,45 @@ void terminal::start_daemon() {
 
 void terminal::callback_rpc() {
     std::string res_form;
+    std::string event;
+    std::string event_payload;
     while(!is_exit_program())
     {
         pthread_mutex_lock(&mutex);
         pthread_cond_wait(&cond,&mutex);
-        log.print_log("received command");
-        if (event == MQTT_MESSAGE_TYPE_OPEN_DOOR) {
-            operate_open_door(event_payload);
-        } else if (event == MQTT_MESSAGE_TYPE_COLLECT_DATASET) {
-            operate_collect_data(event_payload);
-        } else if (event == MQTT_MESSAGE_TYPE_GRAB_IMAGE) {
-            operate_grab_image(event_payload);
-        } else if(event == MQTT_MESSAGE_TYPE_CAMERA_MODULE_SET){
-            operate_camera_module_set(event_payload);
-        } else if(event == MQTT_MESSAGE_TYPE_SET_SOUND){
-            operate_set_sound(event_payload);
-        }else if(event == MQTT_MESSAGE_TYPE_CAMERA_MODULE_GET){
-            operate_camera_module_get(event_payload);
-        } else if (event == MQTT_MESSAGE_TYPE_CUSTOMER_ATTRIBUTE) {
-            operate_customer_attribute(event_payload);
-        } else if (event == MQTT_MESSAGE_TYPE_DEVICE_FILE_DOWNLOAD) {
-            operate_device_file_download(event_payload);
-        }else if (event == MQTT_MESSAGE_TYPE_TERMINATE) {
-            pthread_mutex_unlock(&mutex);
-            clear_event_data();
-            break;
-        } 
-        else if(event != "NONE"){
-            log.print_log("received unkonwn command");
-            log.print_log(event);
+        while (!received_events.empty())
+        {
+            event = received_events.front().first;
+            event_payload = received_events.front().second;
+            received_events.pop();
+            log.print_log("received command : " + event);
+            if (event == MQTT_MESSAGE_TYPE_OPEN_DOOR){
+                operate_open_door(event_payload);
+            }else if (event == MQTT_MESSAGE_TYPE_COLLECT_DATASET){
+                operate_collect_data(event_payload);
+            }else if (event == MQTT_MESSAGE_TYPE_GRAB_IMAGE){
+                operate_grab_image(event_payload);
+            }else if (event == MQTT_MESSAGE_TYPE_CAMERA_MODULE_SET){
+                operate_camera_module_set(event_payload);
+            }else if (event == MQTT_MESSAGE_TYPE_SET_SOUND){
+                operate_set_sound(event_payload);
+            }else if (event == MQTT_MESSAGE_TYPE_CAMERA_MODULE_GET){
+                operate_camera_module_get(event_payload);
+            }else if (event == MQTT_MESSAGE_TYPE_CUSTOMER_ATTRIBUTE){
+                operate_customer_attribute(event_payload);
+            }else if (event == MQTT_MESSAGE_TYPE_DEVICE_FILE_DOWNLOAD){
+                operate_device_file_download(event_payload);
+            }else if (event == MQTT_MESSAGE_TYPE_TERMINATE){
+                pthread_mutex_unlock(&mutex);
+                break;
+            }else if (event != "NONE"){
+                log.print_log("received unkonwn command");
+                log.print_log(event);
+            }
+            
         }
-
-        
-        clear_event_data();
         pthread_mutex_unlock(&mutex);
     }
-    
 }
 
 bool terminal::operate_camera_module_set(std::string event_payload){
@@ -662,9 +663,4 @@ void terminal::exit_program(bool exit){
 
 bool terminal::is_exit_program(){
     return terminate_program;
-}
-
-void terminal::clear_event_data(){
-    event = "NONE";
-    event_payload = "NONE";
 }

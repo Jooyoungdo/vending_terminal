@@ -24,6 +24,8 @@
 //#include </usr/include/mysql/mysql.h>
 #include <mysql/mysql.h>
 #include <pthread.h>
+#include <iostream>
+#include <queue>
 
 #include "sound_manager.h"
 
@@ -104,13 +106,14 @@ private:
     std::string password = "return123";
     std::string database = "test";
 
-    std::string event = "NONE";
-    std::string event_payload = "NONE";
+    // std::string event = "NONE";
+    // std::string event_payload = "NONE";
 
     pthread_cond_t cond;
     pthread_mutex_t mutex;
     bool terminate_program = false;
 
+    std::queue<std::pair<std::string, std::string>> received_events;
 public:
     // terminal class initiaizer, also initialize all inherited classes.
     terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic,std::string target_board);
@@ -155,7 +158,6 @@ public:
     bool open_close_door(std::string event_payload,bool do_resonpse);
     void start_daemon();
     void callback_rpc();
-    void clear_event_data();
     bool donwload_file(std::string event_payload);
 };
 
