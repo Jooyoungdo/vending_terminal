@@ -81,6 +81,11 @@ std::string AudioManager::GetSoundFileRoot(){
 }
 
 bool AudioManager::PlaySound(SOUND_TYPE sound_type){
+	
+	if(GetSoundCardCount() <= 0){
+		log.print_log("sound card is not exist");
+		return false;
+	}
 
 	switch (sound_type)
 	{

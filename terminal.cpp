@@ -433,7 +433,7 @@ bool terminal::operate_customer_attribute(std::string event_payload){
     int glass = json_doc["glass"].GetInt64();
     int emotion = json_doc["emotion"].GetInt64();
     int mask = json_doc["mask"].GetInt64();
-    int smileScore = json_doc["smileScore"].GetInt64();
+    int smileScore = json_doc["smile_score"].GetInt64();
 
     std::string is_new_customer = (new_customer == 2 ? "false" : "true");
     log.print_log("new_customer : " + is_new_customer);
