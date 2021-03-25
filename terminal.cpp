@@ -495,7 +495,8 @@ bool terminal::operate_set_sound(std::string event_payload){
     long volume_percent =(long) json_doc["sound"].GetInt64();
     if(volume_percent >=0 && volume_percent <=100){
         AudioManager *audio = AudioManager::GetInstance();
-        audio->SetSpeakerVolume(volume_percent);
+        //audio->SetSpeakerVolume(volume_percent);
+        audio->SetSpeakerVolumeWithCommand(volume_percent);
     }else{
         log.print_log("operate_set_sound fail(sound is not valid)");
         return false;

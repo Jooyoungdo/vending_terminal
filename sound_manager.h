@@ -37,6 +37,7 @@ public:
     
     void StopSound();
     void SetSpeakerVolume(long volume_percent);
+    void SetSpeakerVolumeWithCommand(long volume_percent);
     static void DestroyInstance(void);
     bool PlaySound(SOUND_TYPE sound_type);
     std::string GetSoundFileRoot();

@@ -74,6 +74,15 @@ void AudioManager::SetSpeakerVolume(long volume_percent){
 	return;
 }
 
+void AudioManager::SetSpeakerVolumeWithCommand(long volume_percent){
+	std::string volume;
+	std::string cmd ;
+	volume = std::to_string(volume_percent);
+	cmd = "amixer sset 'Speaker' playback "+volume+"%";
+	system(cmd.c_str());
+	return;
+}
+
 
 std::string AudioManager::GetSoundFileRoot(){
 	//TODO: fix hardcoding path
