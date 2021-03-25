@@ -4,8 +4,8 @@
 
 enum CUSTOMER_TYPE{
     CUSTOMER_TYPE_UNKNOWN=0,
-    CUSTOMER_TYPE_OLD,
-    CUSTOMER_TYPE_NEW
+    CUSTOMER_TYPE_NEW,
+    CUSTOMER_TYPE_OLD
 };
 
 terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
