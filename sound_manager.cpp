@@ -81,7 +81,7 @@ std::string AudioManager::GetSoundFileRoot(){
 }
 
 bool AudioManager::PlaySound(SOUND_TYPE sound_type){
-	
+
 	if(GetSoundCardCount() <= 0){
 		log.print_log("sound card is not exist");
 		return false;
@@ -97,7 +97,10 @@ bool AudioManager::PlaySound(SOUND_TYPE sound_type){
 		break;
 	case SOUND_TYPE_GREETING:
 		PlayGreetingSound();
-		break;		
+		break;
+	case SOUND_TYPE_REGREETING:
+		PlayReGreetingSound();
+		break;			
 	default:
 		return false;
 		break;
@@ -128,6 +131,17 @@ void AudioManager::PlayCloseSound(){
 void AudioManager::PlayGreetingSound(){
 	AudioFileInfo audio = {
 		GetSoundFileRoot()+"greeting_voice.wav",
+		AudioManager::GREETING_VOICE_SEC,
+		AudioManager::SOUND_FORMAT,
+		AudioManager::BIT_RATE,
+		AudioManager::SOUND_CHANNEL};
+	Play(audio);
+	return;
+}
+
+void AudioManager::PlayReGreetingSound(){
+	AudioFileInfo audio = {
+		GetSoundFileRoot()+"regreeting_voice.wav",
 		AudioManager::GREETING_VOICE_SEC,
 		AudioManager::SOUND_FORMAT,
 		AudioManager::BIT_RATE,

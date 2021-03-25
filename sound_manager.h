@@ -11,7 +11,8 @@
 enum SOUND_TYPE{
     SOUND_TYPE_OPEN,
     SOUND_TYPE_CLOSE,
-    SOUND_TYPE_GREETING
+    SOUND_TYPE_GREETING,
+    SOUND_TYPE_REGREETING,
 };
 
 struct AudioFileInfo{
@@ -57,6 +58,7 @@ private:
     void PlayOpenSound();
     void PlayCloseSound();
     void PlayGreetingSound();
+    void PlayReGreetingSound();
     void Play(AudioFileInfo sound_file_info);
     snd_pcm_t *pcm_handle;
     logger log = logger("SOUND");

@@ -1,6 +1,13 @@
 #include "terminal.h"
 //#define TEST_DOWNLOAD
 // terminal class initializer which initialize all inherited classes
+
+enum CUSTOMER_TYPE{
+    CUSTOMER_TYPE_UNKNOWN=0,
+    CUSTOMER_TYPE_OLD,
+    CUSTOMER_TYPE_NEW
+};
+
 terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
         std::string _user_id, std::string _topic,std::string target_board):
         SERVER_ADDRESS(_SERVER_ADDRESS),
@@ -225,7 +232,10 @@ std::string terminal::create_response_form(std::string json, std::string type, s
             rapidjson::Value name;
             name.SetString((iter->c_str()), iter->length());
             if (*iter == "type") {
-                return_form["type"].SetString(type.data(),type.size(),allocator);
+                rapidjson::Value str_value;
+                str_value.SetString(type.c_str(), type.length());
+                // return_form["type"].SetString(type.data(),type.size());
+                return_form.AddMember("type", str_value, allocator);
             }
             else{
                 return_form.AddMember(name, input_form[iter->c_str()], allocator);
@@ -258,7 +268,11 @@ std::vector<std::string> terminal::init_json_member(std::string type){
                              "stage", "msg", "ret_code",
                              "upload_duration", "timestamp"});
     }
-    else if (type.compare("door_open_close") == 0){
+    else if (type.compare("open_door_resp") == 0){
+        json_members.assign({"msg_id", "operation_log_id", "type",
+                             "token", "msg", "ret_code", "timestamp"});
+    }
+    else if (type.compare("close_door_resp") == 0){
         json_members.assign({"msg_id", "operation_log_id", "type",
                              "token", "msg", "ret_code", "timestamp"});
     }
@@ -352,7 +366,7 @@ void terminal::callback_rpc() {
             event = received_events.front().first;
             event_payload = received_events.front().second;
             received_events.pop();
-            log.print_log("received command : " + event);
+            log.print_log("pop event : " + event);
             if (event == MQTT_MESSAGE_TYPE_OPEN_DOOR){
                 operate_open_door(event_payload);
             }else if (event == MQTT_MESSAGE_TYPE_COLLECT_DATASET){
@@ -424,9 +438,12 @@ bool terminal::operate_customer_attribute(std::string event_payload){
     rapidjson::Document json_doc;
     json_doc.Parse(event_payload.c_str());
     AudioManager *audio = AudioManager::GetInstance();
-    audio->PlaySound(SOUND_TYPE_GREETING);
-
     int new_customer = json_doc["new_customer"].GetInt64();
+    if(new_customer == CUSTOMER_TYPE_NEW){
+        audio->PlaySound(SOUND_TYPE_GREETING);
+    }else if(new_customer == CUSTOMER_TYPE_OLD){
+        audio->PlaySound(SOUND_TYPE_REGREETING);
+    }
     int age = json_doc["age"].GetInt64();
     int gender = json_doc["gender"].GetInt64();
     int attractive = json_doc["attractive"].GetInt64();
