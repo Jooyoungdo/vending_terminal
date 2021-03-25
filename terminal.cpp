@@ -248,8 +248,9 @@ std::string terminal::create_response_form(std::string json, std::string type, s
             } else if (*iter == "ret_code") {
                 return_form.AddMember("ret_code", (result ? "0000" : "0001"), allocator);
             } else {
-                log.print_log("can't find return type handler ... abort");
-                log.print_log(*iter);
+                return_form.RemoveMember((*iter).c_str());
+                //log.print_log("can't find return type handler ... abort");
+                log.print_log(*iter + " is removed, not used");
             }
         }
     }
