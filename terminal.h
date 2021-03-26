@@ -158,7 +158,7 @@ public:
     bool open_close_door(std::string event_payload,bool do_resonpse);
     void start_daemon();
     void callback_rpc();
-    bool donwload_file(std::string event_payload);
+    bool download_file(std::string event_payload);
 };
 
 #endif //DAEMON_PROCESS_TERMINAL_H

@@ -573,7 +573,7 @@ bool terminal::operate_device_file_download(std::string event_payload){
  
     std::string res_form;
 
-    if (donwload_file(event_payload))
+    if (download_file(event_payload))
         res_form = create_response_form(event_payload, "file_download_resp", "download success", true);
     else
         res_form = create_response_form(event_payload, "file_download_resp", "download fail", false);
@@ -608,29 +608,21 @@ bool terminal::open_close_door(std::string event_payload,bool do_response){
     return true;
 }
 
-bool terminal::donwload_file(std::string event_payload){
+bool terminal::download_file(std::string event_payload){
     rapidjson::Document json_doc;
+    json_doc.Parse(event_payload.c_str());
     CURL *curl;
     CURLcode res;
     FILE *fp = NULL;
     bool result = true;
 
-#ifdef TEST_DOWNLOAD
-    std::string file_url = "https://ai0.beyless.com/object-storage/vending/file/close_voice.mp3";
-    std::string file_type = "close_door_sound";
-    std::string file_md5 = "";
-    AudioManager* audio = AudioManager::GetInstance();
-    std::string file_name = "/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/build/";
-#else
-    
     std::string file_url = json_doc["file_url"].GetString();
     std::string file_type = json_doc["file_type"].GetString();
     std::string file_md5 = json_doc["file_md5"].GetString();
+
     AudioManager* audio = AudioManager::GetInstance();
     std::string file_name = audio->GetSoundFileRoot();
-#endif    
-    
-
+ 
     if(file_type.compare("open_door_sound")==0){
         file_name += "open_voice.wav";
     }else if(file_type.compare("close_door_sound")==0){
@@ -642,7 +634,6 @@ bool terminal::donwload_file(std::string event_payload){
         result = false;
         goto FUNC_END;
     }
-    json_doc.Parse(event_payload.c_str());
 
     curl = curl_easy_init();                                                                                                                                                                                                                                                           
     fp = fopen(file_name.c_str(),"wb");
