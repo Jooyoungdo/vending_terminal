@@ -77,7 +77,25 @@ void AudioManager::SetSpeakerVolume(long volume_percent){
 
 std::string AudioManager::GetSoundFileRoot(){
 	//TODO: fix hardcoding path
-	return "/home/firefly/beyless_vending_terminal/sound/";
+	const char * home_env = std::getenv("HOME");
+	if (home_env == nullptr){ 
+		return "";
+	}
+	else{
+		std::string home_env_str(home_env);
+		return home_env_str+ "/beyless_vending_terminal/sound/";
+	}
+	
+}
+
+std::string GetEnv( const std::string & var ) {
+     const char * val = std::getenv("HOME");
+     if ( val == nullptr ) { // invalid to assign nullptr to std::string
+         return "";
+     }
+     else {
+         return val;
+     }
 }
 
 bool AudioManager::PlaySound(SOUND_TYPE sound_type){
@@ -227,20 +245,28 @@ FUNC_END:
 }
 
 int AudioManager::GetSoundCardCount(){
-	int total_cards = 0;   // No cards found yet
+	static int total_cards = 0;   // No cards found yet
     int card_num = -1;     // Start with first card
     int err;
-	int max_sound_cards = 10;
-    for (int i =0 ; i< max_sound_cards;i++) {
-        // Get next sound card's card number.
-        if ((err = snd_card_next(&card_num)) < 0) {
-			log.print_log("Can't get the next card number: "+ std::string( snd_strerror(err)));
-            break;
-        }
-        if (card_num < 0)
-            break;
-        ++total_cards;   // Another card found, so bump the count
-    }
-    snd_config_update_free_global();
-	return total_cards;
+	int max_sound_cards = 3;
+	static bool is_sound_card_saved = false;
+	if(!is_sound_card_saved){
+		total_cards = 0;
+		for (int i =0 ; i< max_sound_cards;i++) {
+		// Get next sound card's card number.
+			if ((err = snd_card_next(&card_num)) < 0) {
+				log.print_log("Can't get the next card number: "+ std::string( snd_strerror(err)));
+				break;
+			}
+			if (card_num < 0)
+				break;
+			++total_cards;   // Another card found, so bump the count
+		}
+		snd_config_update_free_global();
+		is_sound_card_saved = true;
+	}else{
+		return total_cards;
+	}
+
+	return 0;
 }
