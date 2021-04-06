@@ -382,6 +382,8 @@ void terminal::callback_rpc() {
                 operate_camera_module_get(event_payload);
             }else if (event == MQTT_MESSAGE_TYPE_CUSTOMER_ATTRIBUTE){
                 operate_customer_attribute(event_payload);
+            }else if (event == MQTT_MESSAGE_TYPE_GOODBYE){
+                operate_goodbye(event_payload);
             }else if (event == MQTT_MESSAGE_TYPE_DEVICE_FILE_DOWNLOAD){
                 operate_device_file_download(event_payload);
             }else if (event == MQTT_MESSAGE_TYPE_TERMINATE){
@@ -487,6 +489,18 @@ bool terminal::operate_customer_attribute(std::string event_payload){
     */
     return true;
 }
+
+bool terminal::operate_goodbye(std::string event_payload){
+    //TODO: sound play 기능 구현
+    // sound play 동작은 response 보낼 필요 없음
+    rapidjson::Document json_doc;
+    json_doc.Parse(event_payload.c_str());
+    AudioManager *audio = AudioManager::GetInstance();
+    audio->PlaySound(SOUND_TYPE_GOODBYE);
+    return true;
+}
+
+
 
 bool terminal::operate_set_sound(std::string event_payload){
     // sound play 동작은 response 보낼 필요 없음
