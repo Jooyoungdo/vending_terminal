@@ -264,9 +264,7 @@ int AudioManager::GetSoundCardCount(){
 		}
 		snd_config_update_free_global();
 		is_sound_card_saved = true;
-	}else{
-		return total_cards;
 	}
 
-	return 0;
+	return total_cards;
 }
