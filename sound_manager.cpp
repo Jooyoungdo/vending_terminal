@@ -118,7 +118,10 @@ bool AudioManager::PlaySound(SOUND_TYPE sound_type){
 		break;
 	case SOUND_TYPE_REGREETING:
 		PlayReGreetingSound();
-		break;			
+		break;
+	case SOUND_TYPE_GOODBYE:
+		PlayGoodByeSound();
+		break;				
 	default:
 		return false;
 		break;
@@ -160,7 +163,18 @@ void AudioManager::PlayGreetingSound(){
 void AudioManager::PlayReGreetingSound(){
 	AudioFileInfo audio = {
 		GetSoundFileRoot()+"regreeting_voice.wav",
-		AudioManager::GREETING_VOICE_SEC,
+		AudioManager::REGREETING_VOICE_SEC,
+		AudioManager::SOUND_FORMAT,
+		AudioManager::BIT_RATE,
+		AudioManager::SOUND_CHANNEL};
+	Play(audio);
+	return;
+}
+
+void AudioManager::PlayGoodByeSound(){
+	AudioFileInfo audio = {
+		GetSoundFileRoot()+"goodbye_voice.wav",
+		AudioManager::GOODBYE_VOICE_SEC,
 		AudioManager::SOUND_FORMAT,
 		AudioManager::BIT_RATE,
 		AudioManager::SOUND_CHANNEL};

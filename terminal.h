@@ -64,6 +64,7 @@ private:
     const std::string MQTT_MESSAGE_TYPE_CAMERA_MODULE_SET = "camera_module_set";
     const std::string MQTT_MESSAGE_TYPE_CAMERA_MODULE_GET = "camera_module_get";
     const std::string MQTT_MESSAGE_TYPE_CUSTOMER_ATTRIBUTE = "customer_attribute";
+    const std::string MQTT_MESSAGE_TYPE_GOODBYE = "goodbye_data";
     const std::string MQTT_MESSAGE_TYPE_TERMINATE = "terminate";
     const std::string MQTT_MESSAGE_TYPE_SET_SOUND = "set_sound";
     const std::string MQTT_MESSAGE_TYPE_DEVICE_FILE_DOWNLOAD = "file_download";
@@ -150,6 +151,7 @@ public:
     bool operate_camera_module_set(std::string event_payload);
     bool operate_camera_module_get(std::string event_payload);
     bool operate_customer_attribute(std::string event_payload);
+    bool operate_goodbye(std::string event_payload);
     bool operate_set_sound(std::string event_payload);
     bool operate_grab_image(std::string event_payload);
     bool operate_collect_data(std::string event_payload);
