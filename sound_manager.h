@@ -51,8 +51,8 @@ private:
     const int SOUND_CHANNEL = 1; // this can be changed if other sound file is used
     const float OPEN_VOICE_SEC = 1.2; // this can be changed if other sound file is used
     const float CLOSE_VOICE_SEC= 1.2; // this can be changed if other sound file is used
-    const float GREETING_VOICE_SEC = 4.9; // this can be changed if other sound file is used
-    const float REGREETING_VOICE_SEC = 1.2; // this can be changed if other sound file is used
+    const float GREETING_VOICE_SEC = 4.3; // this can be changed if other sound file is used
+    const float REGREETING_VOICE_SEC = 1.7; // this can be changed if other sound file is used
     const float GOODBYE_VOICE_SEC = 1.2; // this can be changed if other sound file is used
     const snd_pcm_format_t SOUND_FORMAT = SND_PCM_FORMAT_S16_LE;
     const std::string PCM_DEVICE = "default";
