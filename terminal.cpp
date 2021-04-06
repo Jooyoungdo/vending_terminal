@@ -594,8 +594,10 @@ bool terminal::open_close_door(std::string event_payload,bool do_response){
         res_form = create_response_form(event_payload, "open_door_resp", (result ? "open door success" : "open door fail"), result);
         mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
     }
-    if (wait_open())
+    if (wait_open()){
         wait_close();
+    }
+        
     result = door_close();
     if (result){
         audio->PlaySound(SOUND_TYPE_CLOSE);

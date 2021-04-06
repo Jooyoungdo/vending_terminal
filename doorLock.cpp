@@ -157,15 +157,22 @@ bool doorLock::door_close(){
 
 // wait until doorLock state is in UNLOCK and OPEN
 bool doorLock::wait_open(){
+     bool result = true;
+    int wait_open_micro_sec = 10 * 1000 * 1000; // wait 10 sec to open
+    int sleep_micro_sec = 1000;
+    int retry_count = 0;
     get_states();
     while (this->status != FIREFLY_UNLOCK_OPEN && this->status !=DEEPTHINK_UNLOCK_OPEN){
         get_states();
-        usleep(1000);
-        // log.print_log("wait_open");
-        // log.print_log(std::to_string(this->status));
+        usleep(sleep_micro_sec);
+        if (retry_count >= wait_open_micro_sec / sleep_micro_sec){
+            result = false;
+            break;
+        }
+        retry_count++;
     }
     log.print_log("OPEN");
-    return true;
+    return result;
 }
 
 // wait until doorLock state is in UNLOCK and CLOSE
@@ -174,8 +181,6 @@ bool doorLock::wait_close() {
     while (this->status != FIREFLY_UNLOCK_CLOSE && this->status !=DEEPTHINK_UNLOCK_CLOSE){
         get_states();
         usleep(1000);
-        // log.print_log("wait_close");
-        // log.print_log(std::to_string(this->status));
     }
     log.print_log("CLOSE");
     return true;
