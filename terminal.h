@@ -120,8 +120,8 @@ public:
     terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic,std::string target_board);
     ~terminal();
     
-    void exit_program(bool exit);
-    bool is_exit_program();
+    void stop_daemon();
+    bool is_daemon_stoped();
     const std::string TARGET_BOARD_FIREFLY = "FIREFLY";
     const std::string TARGET_BOARD_DEEPTHINK = "DEEPTHINK";
 

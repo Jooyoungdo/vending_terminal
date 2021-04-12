@@ -36,7 +36,9 @@ int main(int argc, char** argv) {
 #ifndef DEBUG_BAIVE    
     T.initialize_MySQL_connector();
 #endif
-
+    std::cout << "Project Major Version " << PROJECT_VERSION_MAJOR <<std::endl;
+    std::cout << "Project Minor Version " << PROJECT_VERSION_MINOR <<std::endl;
+    std::cout << "Project Patch Version " << PROJECT_VERSION_PATCH <<std::endl;
     T.start_daemon();
 
     //start vending terminal until q pressed
@@ -44,7 +46,7 @@ int main(int argc, char** argv) {
     std::cout << "Start Baive Terminal Program..." << std::endl;
     std::cout << "press 'q' to exit" << std::endl;
     while(std::tolower(std::cin.get()) != 'q');
-    T.exit_program(true);
+    T.stop_daemon();
     std::cout << "Exit Baive Terminal Program..." << std::endl;
 
     return 0;

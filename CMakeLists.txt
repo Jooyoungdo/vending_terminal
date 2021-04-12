@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(daemon_process)
+project(daemon_process VERSION 2.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(PAHO_CPP_LIB paho-mqttpp3)
@@ -12,6 +12,12 @@ target_link_libraries( daemon_process ${OpenCV_LIBS} ${PAHO_C_LIB} ${PAHO_CPP_LI
 add_definitions(-DOPENSSL)
 
 message("-- Opencv version ${OpenCV_VERSION}")
+message("-- Project major version ${CMAKE_PROJECT_VERSION_MAJOR}")
+message("-- Project minor version ${CMAKE_PROJECT_VERSION_MINOR}")
+message("-- Project patch version ${CMAKE_PROJECT_VERSION_PATCH}")
+add_definitions(-DPROJECT_VERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR})
+add_definitions(-DPROJECT_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR})
+add_definitions(-DPROJECT_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH})
 if(OpenCV_VERSION VERSION_LESS "4")
     message("-- Add OLD_OPENCV flag")
     add_definitions(-DOLD_OPENCV)

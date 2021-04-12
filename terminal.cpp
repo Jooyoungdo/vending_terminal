@@ -358,12 +358,11 @@ void terminal::callback_rpc() {
     std::string res_form;
     std::string event;
     std::string event_payload;
-    while(!is_exit_program())
+    while(!is_daemon_stoped())
     {
         pthread_mutex_lock(&mutex);
         pthread_cond_wait(&cond,&mutex);
-        while (!received_events.empty())
-        {
+        while (!received_events.empty()){
             event = received_events.front().first;
             event_payload = received_events.front().second;
             received_events.pop();
@@ -387,7 +386,7 @@ void terminal::callback_rpc() {
             }else if (event == MQTT_MESSAGE_TYPE_DEVICE_FILE_DOWNLOAD){
                 operate_device_file_download(event_payload);
             }else if (event == MQTT_MESSAGE_TYPE_TERMINATE){
-                pthread_mutex_unlock(&mutex);
+                //pthread_mutex_unlock(&mutex);
                 break;
             }else if (event != "NONE"){
                 log.print_log("received unkonwn command");
@@ -679,13 +678,11 @@ FUNC_END:
 //     system("");
 // }
 
-void terminal::exit_program(bool exit){
-    terminate_program = exit;
-    if(exit){
-        pthread_cond_signal(&cond);
-    }
+void terminal::stop_daemon(){
+    terminate_program = true;
+    pthread_cond_signal(&cond);    
 }
 
-bool terminal::is_exit_program(){
+bool terminal::is_daemon_stoped(){
     return terminate_program;
 }
