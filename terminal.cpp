@@ -179,10 +179,11 @@ void terminal::initialize_mqtt_client() {
 }
 
 // initialize MYSQL database (require auto reconnect )
-void terminal::initialize_MySQL_connector() {
+bool terminal::initialize_MySQL_connector() {
+    bool result= true;
     if( !(conn = mysql_init((MYSQL*)NULL))){
         log.print_log("init fail");
-        exit(1);
+        return false;
     }
     log.print_log("mysql initialize success.");
 
@@ -191,7 +192,7 @@ void terminal::initialize_MySQL_connector() {
 
     if(!mysql_real_connect(conn, server.c_str(), user.c_str(), password.c_str(), NULL, 3306, NULL, 0)){
         log.print_log("connect error.");
-        exit(1);
+        return false;
     }
 
     log.print_log("mysql connect success");
@@ -199,9 +200,10 @@ void terminal::initialize_MySQL_connector() {
     if(mysql_select_db(conn, database.c_str()) != 0){
         mysql_close(conn);
         log.print_log("select db fail");
-        exit(1);
+        return false;
     }
     log.print_log("select db success");
+    return result;
 }
 
 // publish stirng type payload using pub1 object
@@ -394,6 +396,7 @@ void terminal::callback_rpc() {
             }
             
         }
+        
         pthread_mutex_unlock(&mutex);
     }
 }
