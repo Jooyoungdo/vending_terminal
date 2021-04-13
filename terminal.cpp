@@ -9,7 +9,7 @@ enum CUSTOMER_TYPE{
 };
 
 terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
-        std::string _user_id, std::string _topic,std::string target_board):
+        std::string _user_id, std::string _topic,std::string target_board,std::string serial_number, std::string project_ver):
         SERVER_ADDRESS(_SERVER_ADDRESS),
         cli(SERVER_ADDRESS, "DEVICE_"+_user_id),
         sub1(cli, _topic, _QOS),
@@ -25,6 +25,8 @@ terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
     this->QOS = _QOS;
     this->user_id = _user_id;
     this->topic = _topic;
+    this->project_ver_ = project_ver;
+    this->serial_number_ = serial_number;
 
     this->subjects.push_back(mqtt::topic(cli, _topic, _QOS));
     this->subjects.push_back(mqtt::topic(cli, MQTT_SERVER_TOPIC_DEVICE_PREFIX+_topic, _QOS));
@@ -189,14 +191,14 @@ bool terminal::initialize_MySQL_connector() {
     bool reconnect = 1;
     mysql_options(conn, MYSQL_OPT_RECONNECT, &reconnect);
 
-    if(!mysql_real_connect(conn, server.c_str(), user.c_str(), password.c_str(), NULL, 3306, NULL, 0)){
+    if(!mysql_real_connect(conn, MYSQL_SERVER_IP.c_str(), MYSQL_USER.c_str(), MYSQL_PASSWORD.c_str(), NULL, 3306, NULL, 0)){
         log.print_log("connect error.");
         return false;
     }
 
     log.print_log("mysql connect success");
 
-    if(mysql_select_db(conn, database.c_str()) != 0){
+    if(mysql_select_db(conn, MYSQL_DB.c_str()) != 0){
         mysql_close(conn);
         log.print_log("select db fail");
         return false;
@@ -350,11 +352,11 @@ int64_t terminal::database_upload(cv::Mat iter, std::string env_id, std::string 
     return mysql_insert_id(conn);
 }
 
-void terminal::start_daemon(std::string serial_number, std::string daemon_process_version) {
+void terminal::start_daemon() {
     std::thread t0(&terminal::callback_rpc, this);
     t0.detach();
 
-    update_device_info(serial_number,daemon_process_version);
+    update_device_info();
 }
 
 void terminal::callback_rpc() {
@@ -691,7 +693,7 @@ bool terminal::is_daemon_stoped(){
     return terminate_program;
 }
 
-void terminal::update_device_info(std::string serial_number,std::string daemon_version){
+void terminal::update_device_info(){
     std::string res_form;
     std::string event_payload;
     rapidjson::Document return_form;
@@ -702,10 +704,10 @@ void terminal::update_device_info(std::string serial_number,std::string daemon_v
 
     rapidjson::Value str_value;
     
-    str_value.SetString(serial_number.c_str(), serial_number.length());
+    str_value.SetString(serial_number_.c_str(), serial_number_.length());
     return_form.AddMember("serial_number", str_value, allocator);
 
-    str_value.SetString(daemon_version.c_str(), daemon_version.length());
+    str_value.SetString(project_ver_.c_str(), project_ver_.length());
     return_form.AddMember("daemon_version", str_value, allocator);
 
     str_value.SetString(message_type.c_str(), message_type.length());

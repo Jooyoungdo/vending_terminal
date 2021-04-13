@@ -41,7 +41,8 @@ private:
     //mqtt::topic pub1,mqtt::topic pub2, 
     mqtt::topic sub2, mqtt::topic sub3, mqtt::topic sub1);
 
-    
+    std::string serial_number_;
+    std::string project_ver_;
 // mqtt broker address with port number
     const std::string SERVER_ADDRESS;
     // mqtt client optional parameter
@@ -103,10 +104,10 @@ private:
     // old mysql server
     //char *server = "192.168.10.69";
     // current mysql server
-    std::string server = "192.168.10.144";
-    std::string user = "root";
-    std::string password = "return123";
-    std::string database = "test";
+    const std::string MYSQL_SERVER_IP = "192.168.10.144";
+    const std::string MYSQL_USER = "root";
+    const std::string MYSQL_PASSWORD = "return123";
+    const std::string MYSQL_DB = "test";
 
     // std::string event = "NONE";
     // std::string event_payload = "NONE";
@@ -118,7 +119,7 @@ private:
     std::queue<std::pair<std::string, std::string>> received_events;
 public:
     // terminal class initiaizer, also initialize all inherited classes.
-    terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic,std::string target_board);
+    terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic,std::string target_board ,std::string serial_number, std::string project_ver);
     ~terminal();
     
     void stop_daemon();
@@ -159,9 +160,9 @@ public:
     bool operate_open_door(std::string event_payload);
     bool operate_device_file_download(std::string event_payload);
     bool open_close_door(std::string event_payload,bool do_resonpse);
-    void start_daemon(std::string serial_number, std::string daemon_process_version);
+    void start_daemon();
     void callback_rpc();
-    void update_device_info(std::string serial_number,std::string daemon_version);
+    void update_device_info();
     bool download_file(std::string event_payload);
 };
 

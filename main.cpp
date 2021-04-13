@@ -15,6 +15,43 @@ std::string get_device_serial_number(){
     //TODO: get sn 
     return "BAIVE_DT_00.20002";   
 }
+
+std::string get_broker_ip(){
+
+    //TODO: get broker ip 
+    //TODO: how?
+    return "ai0.beyless.com:1883";   
+}
+
+
+std::string get_device_id(){
+    std::string serial_number = get_device_serial_number();
+    
+    int previous =0;
+    int current=0;
+    std::vector<std::string> parse_string;
+    parse_string.clear();
+   
+    current= serial_number.find('.');
+    
+    while (current != std::string::npos){
+        std::string substring = serial_number.substr(previous, current - previous);
+        parse_string.push_back(substring);
+        previous = current + 1;
+        current = serial_number.find(',', previous);
+    }
+    
+    parse_string.push_back(serial_number.substr(previous,current-previous));
+    if(parse_string.size() > 0){
+        return parse_string.back();   
+    }else{
+        std::cout << "can't find device id" << std::endl;
+        return "";
+    }
+    
+}
+
+
 std::string get_project_version(){
     std::string major_ver = std::to_string(PROJECT_VERSION_MAJOR);
     std::string minor_ver = std::to_string(PROJECT_VERSION_MINOR);
@@ -35,25 +72,27 @@ std::string get_project_version(){
  */
 int main(int argc, char** argv) {
     // user argument parsing
-#ifdef DEBUG_BAIVE
-    std::string device_id = std::string("20002");
-    std::string broker_ip = std::string("ai0.beyless.com:1883");
-#else
+    std::string device_id ;
+    std::string broker_ip ;
+
     if (argc < 3){
-        std::cout << "not enough user argument." << std::endl <<
-        "argument vector lists : sudo ./daemon_process [device_id] [cam count] [cam device numbers ....] [ip address]" << std::endl;
-        exit(0);
+        device_id = get_device_id();
+        broker_ip = get_broker_ip();
+        std::cout << "not enough user argument"<< std::endl;
+        std::cout << "read device id from serial number :" << device_id << std::endl;
+        std::cout << "read broker ip fromn saved info :" << broker_ip << std::endl;
+    }else{
+        device_id = argv[1];
+        broker_ip = argv[argc - 1];
     }
-    std::string device_id = argv[1];
-    std::string broker_ip = argv[argc-1];
-#endif
-    //get board info
     
-    std::string target_board= get_device_name();
-    std::string serial_number = get_device_serial_number();
-    std::string project_verion = get_project_version();
+
     //create terminal object and initialize mqtt, MySQl
-    terminal T(broker_ip, 0, device_id, device_id, target_board);
+    terminal T(broker_ip, 0, device_id, device_id,
+               get_device_name(),
+               get_device_serial_number(),
+               get_project_version()
+    );
     T.initialize_mqtt_client();
 #ifndef DEBUG_BAIVE    
     if(!T.initialize_MySQL_connector()){
@@ -62,7 +101,7 @@ int main(int argc, char** argv) {
 #endif
     
     
-    T.start_daemon(serial_number, project_verion);
+    T.start_daemon();
     //T.update_device_info(,get_project_version());
     //start vending terminal until q pressed
     //std::cout << "||||||||||||[START BEYLESS VENDING TERMINAL]||||||||||||" << std::endl;
