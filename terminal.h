@@ -51,6 +51,7 @@ private:
     const std::string MQTT_CLIENT_TOPIC_DEVICE_IMAGE_UPLOAD = "device_image_upload";
     const std::string MQTT_CLIENT_TOPIC_DEVICE_OPERATION = "device_operation";
     const std::string MQTT_CLIENT_TOPIC_DEVICE_UPDATE = "device_update";
+    const std::string MQTT_CLIENT_TOPIC_DEVICE_INFO = "device_info";
     const std::string MQTT_CLIENT_TOPIC_DEVICE_REMOTE = "device_REMOTE";
 
     const std::string MQTT_SERVER_TOPIC_DEVICE_PREFIX = "DEVICE_";
@@ -158,8 +159,9 @@ public:
     bool operate_open_door(std::string event_payload);
     bool operate_device_file_download(std::string event_payload);
     bool open_close_door(std::string event_payload,bool do_resonpse);
-    void start_daemon();
+    void start_daemon(std::string serial_number, std::string daemon_process_version);
     void callback_rpc();
+    void update_device_info(std::string serial_number,std::string daemon_version);
     bool download_file(std::string event_payload);
 };
 

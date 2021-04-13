@@ -128,7 +128,6 @@ void terminal::initialize_mqtt_client() {
 //    connOpts.set_clean_start(true);
     connOpts.set_user_name("beyless");
     connOpts.set_password("ws-beyless");
-
     cli.set_connection_lost_handler([this](const std::string &) {
         log.print_log("connection lost");
         exit(2);
@@ -351,9 +350,11 @@ int64_t terminal::database_upload(cv::Mat iter, std::string env_id, std::string 
     return mysql_insert_id(conn);
 }
 
-void terminal::start_daemon() {
+void terminal::start_daemon(std::string serial_number, std::string daemon_process_version) {
     std::thread t0(&terminal::callback_rpc, this);
     t0.detach();
+
+    update_device_info(serial_number,daemon_process_version);
 }
 
 void terminal::callback_rpc() {
@@ -688,4 +689,33 @@ void terminal::stop_daemon(){
 
 bool terminal::is_daemon_stoped(){
     return terminate_program;
+}
+
+void terminal::update_device_info(std::string serial_number,std::string daemon_version){
+    std::string res_form;
+    std::string event_payload;
+    rapidjson::Document return_form;
+    std::string message_type = "device_info_update";
+    return_form.SetObject();
+    rapidjson::Document::AllocatorType& allocator = return_form.GetAllocator();
+    size_t sz = allocator.Size();
+
+    rapidjson::Value str_value;
+    
+    str_value.SetString(serial_number.c_str(), serial_number.length());
+    return_form.AddMember("serial_number", str_value, allocator);
+
+    str_value.SetString(daemon_version.c_str(), daemon_version.length());
+    return_form.AddMember("daemon_version", str_value, allocator);
+
+    str_value.SetString(message_type.c_str(), message_type.length());
+    return_form.AddMember("type", str_value, allocator);
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    return_form.Accept(writer);
+    res_form = buffer.GetString();
+     
+    mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_INFO);
+    return;
 }
