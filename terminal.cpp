@@ -59,10 +59,10 @@ bool terminal::post_image(std::string json) {
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
         if (std::string(d["type"].GetString()) == "grab_image"){
             log.print_log("http upload grab");
-            curl_easy_setopt(curl, CURLOPT_URL, "http://ai0.beyless.com:8080/detection/grab/upload-images");
+            curl_easy_setopt(curl, CURLOPT_URL, "http://ai0.beyless.com/detection/grab/upload-images");
         } else if (std::string(d["type"].GetString()) == "open_door" || std::string(d["type"].GetString()) == "close_door"){
             log.print_log("http upload purchase");
-            curl_easy_setopt(curl, CURLOPT_URL, "http://ai0.beyless.com:8080/detection/upload-images");
+            curl_easy_setopt(curl, CURLOPT_URL, "http://ai0.beyless.com/detection/upload-images");
         } else {
             log.print_log(d["type"].GetString());
         }
