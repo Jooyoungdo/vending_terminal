@@ -3,53 +3,12 @@
 #include "debug.h"
 #include <stdlib.h>
 #include "sound_manager.h"
+#include "vendor_storage.h"
 
 
-std::string get_device_name(){
-    //TODO: 하드코딩된 부분을 디바이스 정보를 읽어서 구현하는 방식으로 해야 함
-    return "DEEPTHINK";
-}
-
-std::string get_device_serial_number(){
-
-    //TODO: get sn 
-    return "BAIVE_DT_00.20002";   
-}
-
-std::string get_broker_ip(){
-
-    //TODO: get broker ip 
-    //TODO: how?
-    return "ai0.beyless.com:1883";   
-}
 
 
-std::string get_device_id(){
-    std::string serial_number = get_device_serial_number();
-    
-    int previous =0;
-    int current=0;
-    std::vector<std::string> parse_string;
-    parse_string.clear();
-   
-    current= serial_number.find('.');
-    
-    while (current != std::string::npos){
-        std::string substring = serial_number.substr(previous, current - previous);
-        parse_string.push_back(substring);
-        previous = current + 1;
-        current = serial_number.find(',', previous);
-    }
-    
-    parse_string.push_back(serial_number.substr(previous,current-previous));
-    if(parse_string.size() > 0){
-        return parse_string.back();   
-    }else{
-        std::cout << "can't find device id" << std::endl;
-        return "";
-    }
-    
-}
+
 
 
 std::string get_project_version(){
@@ -64,7 +23,6 @@ std::string get_project_version(){
 }
 
 
-
 // Door lock controll pin numbers.. (up to device setting)
 
 /*
@@ -74,23 +32,33 @@ int main(int argc, char** argv) {
     // user argument parsing
     std::string device_id ;
     std::string broker_ip ;
+    
+    VendorStorage vendor_info;
 
     if (argc < 3){
-        device_id = get_device_id();
-        broker_ip = get_broker_ip();
+        // vendor_info.SetSerialNumber(argv[1]);
+        // vendor_info.SetBrokerIP(argv[2]);
+        // vendor_info.ParseDeviceInfo();
+        // device_id = vendor_info.GetDeviceID();
+        // broker_ip = vendor_info.GetBrokerIP();
+        // //std::cout << "not enough user argument"<< std::endl;
+        // std::cout << "read device id from serial number : " << device_id << std::endl;
+        // std::cout << "read broker ip from saved info : " << broker_ip << std::endl;
         std::cout << "not enough user argument"<< std::endl;
-        std::cout << "read device id from serial number :" << device_id << std::endl;
-        std::cout << "read broker ip fromn saved info :" << broker_ip << std::endl;
+        exit(1);
     }else{
-        device_id = argv[1];
-        broker_ip = argv[argc - 1];
+        vendor_info.SetDeviceID(argv[1]);
+        vendor_info.SetBrokerIP(argv[2]);
+        //vendor_info.ParseDeviceInfo();
+        device_id = vendor_info.GetDeviceID();
+        broker_ip = vendor_info.GetBrokerIP();
     }
     
 
     //create terminal object and initialize mqtt, MySQl
     terminal T(broker_ip, 0, device_id, device_id,
-               get_device_name(),
-               get_device_serial_number(),
+               vendor_info.GetDeviceName(),
+               vendor_info.GetSerialNumber(),
                get_project_version()
     );
     T.initialize_mqtt_client();
@@ -99,12 +67,8 @@ int main(int argc, char** argv) {
         std::cout << "Can't initialize mysql, it is only for test" << std::endl;
     }
 #endif
-    
-    
+
     T.start_daemon();
-    //T.update_device_info(,get_project_version());
-    //start vending terminal until q pressed
-    //std::cout << "||||||||||||[START BEYLESS VENDING TERMINAL]||||||||||||" << std::endl;
     std::cout << "Start Baive Terminal Program..." << std::endl;
     std::cout << "press 'q' to exit" << std::endl;
     while(std::tolower(std::cin.get()) != 'q');
