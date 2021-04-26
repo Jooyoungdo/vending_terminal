@@ -117,6 +117,7 @@ private:
     bool terminate_program = false;
 
     std::queue<std::pair<std::string, std::string>> received_events;
+    std::string get_image_path();
 public:
     // terminal class initiaizer, also initialize all inherited classes.
     terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic,std::string target_board ,std::string serial_number, std::string project_ver);

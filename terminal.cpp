@@ -79,7 +79,8 @@ bool terminal::post_image(std::string json) {
         for (int i = 0; i < get_image_count(); i++){
             part = curl_mime_addpart(mime);
             curl_mime_name(part, (std::to_string(i) + std::string(".jpg")).c_str());
-            curl_mime_filedata(part,(std::string("/home/changseok/Desktop/image") + std::to_string(i) + std::string(".jpeg")).c_str());
+            
+            curl_mime_filedata(part,(get_image_path() +std::string("image") + std::to_string(i) + std::string(".jpeg")).c_str());
         }
 
         if (d.HasMember("device_id")){
@@ -356,7 +357,7 @@ void terminal::start_daemon() {
     std::thread t0(&terminal::callback_rpc, this);
     t0.detach();
 
-    update_device_info();
+    //update_device_info();
 }
 
 void terminal::callback_rpc() {
@@ -441,7 +442,6 @@ bool terminal::operate_camera_module_get(std::string event_payload){
 }
 
 bool terminal::operate_customer_attribute(std::string event_payload){
-    //TODO: sound play 기능 구현
     // sound play 동작은 response 보낼 필요 없음
     rapidjson::Document json_doc;
     json_doc.Parse(event_payload.c_str());
@@ -496,7 +496,6 @@ bool terminal::operate_customer_attribute(std::string event_payload){
 }
 
 bool terminal::operate_goodbye(std::string event_payload){
-    //TODO: sound play 기능 구현
     // sound play 동작은 response 보낼 필요 없음
     rapidjson::Document json_doc;
     json_doc.Parse(event_payload.c_str());
@@ -525,7 +524,7 @@ bool terminal::operate_set_sound(std::string event_payload){
 
 bool terminal::operate_grab_image(std::string event_payload){
      grab_frame();
-     save_frame("/home/changseok/Desktop/");
+     save_frame(get_image_path());
      post_image(event_payload);
      return true;
 }
@@ -560,26 +559,30 @@ bool terminal::operate_collect_data(std::string event_payload){
 bool terminal::operate_open_door(std::string event_payload){
     std::string res_form;
     if (is_ready()){
-        grab_frame();
-        save_frame("/home/changseok/Desktop/");
-        //TODO: 사진 촬영 실패하더라도 문 여는 동작하도록 되어 있음, 이거 나중에 문제 될 가능성 있음
-        // 실패 처리를 해야 될 듯
-        if (post_image(event_payload))
-            res_form = create_response_form(event_payload, "image_upload", "image_upload", true);
-        else
-            res_form = create_response_form(event_payload, "image_upload", "image_upload", false);
+        //grab_frame();
+        if (!grab_frame() || !save_frame(get_image_path())){
+            res_form = create_response_form(event_payload, "image_upload", "save_frame", false);
+        }
+        else{
+            if (post_image(event_payload))
+                res_form = create_response_form(event_payload, "image_upload", "image_upload", true);
+            else
+                res_form = create_response_form(event_payload, "image_upload", "image_upload", false);
+        }
         mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
 
         open_close_door(event_payload,true);    
-        grab_frame();
-        save_frame("/home/changseok/Desktop/");
-
-        std::regex re("\"type\":\"open_door\"");
-        event_payload = std::regex_replace(event_payload, re, "\"type\":\"close_door\"");
-        if (post_image(event_payload))
-            res_form = create_response_form(event_payload, "image_upload", "image_upload", true);
-        else
-            res_form = create_response_form(event_payload, "image_upload", "image_upload", false);
+        //grab_frame();
+        if(!grab_frame() || !save_frame(get_image_path())){
+            res_form = create_response_form(event_payload, "image_upload", "save_frame", false);
+        }else{
+            std::regex re("\"type\":\"open_door\"");
+            event_payload = std::regex_replace(event_payload, re, "\"type\":\"close_door\"");
+            if (post_image(event_payload))
+                res_form = create_response_form(event_payload, "image_upload", "image_upload", true);
+            else
+                res_form = create_response_form(event_payload, "image_upload", "image_upload", false);
+        }
         mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_OPERATION);
     }else{
         return false;
@@ -643,14 +646,17 @@ bool terminal::download_file(std::string event_payload){
 
     AudioManager* audio = AudioManager::GetInstance();
     std::string file_name = audio->GetSoundFileRoot();
- 
-    if(file_type.compare("open_door_sound")==0){
+
+    if (file_type.compare("open_door_sound") == 0){
         file_name += "open_voice.wav";
-    }else if(file_type.compare("close_door_sound")==0){
+    }
+    else if (file_type.compare("close_door_sound") == 0){
         file_name += "close_voice.wav";
-    }else if(file_type.compare("greeting_sound")==0){
+    }
+    else if (file_type.compare("greeting_sound") == 0){
         file_name += "greeting_voice.wav";
-    }else{
+    }
+    else{
         log.print_log("unknown file type, file is not updated");
         result = false;
         goto FUNC_END;
@@ -693,6 +699,8 @@ bool terminal::is_daemon_stoped(){
     return terminate_program;
 }
 
+// this function is blocked temporary
+// 
 void terminal::update_device_info(){
     std::string res_form;
     std::string event_payload;
@@ -721,3 +729,15 @@ void terminal::update_device_info(){
     mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_INFO);
     return;
 }
+
+std::string terminal::get_image_path(){
+    const char *home_env = std::getenv("HOME");
+    if (home_env == nullptr){
+        return "";
+    }
+    else{
+        std::string home_env_str(home_env);
+        return home_env_str + "/beyless_vending_terminal/image/";
+    }
+}
+
