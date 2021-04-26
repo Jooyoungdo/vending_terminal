@@ -4,6 +4,7 @@
 
 #include "doorLock.h"
 #include "debug.h"
+#include "vendor_storage.h"
 //default initializer (deprecated)
 doorLock::doorLock(){
     log.print_log("default initiailizer called, this initializer used for debugging. please use another one!");
@@ -15,10 +16,9 @@ doorLock::doorLock(std::string target_board){
     log.print_log("door lock initialize ... ");
     this->target_board = target_board;
     
-    if(target_board.compare("FIREFLY") == 0 ){
-
+    if(target_board.compare(DEVICE_NAME_FIREFLY) == 0 ){
         init_firefly_doorlock_gpios();
-    }else if(target_board.compare("DEEPTHINK") == 0 ){
+    }else if(target_board.compare(DEVICE_NAME_DEEPTHINK) == 0 ){
         init_deepthink_doorlock_gpios();
     }
 }
@@ -103,9 +103,9 @@ void doorLock::get_states(){
         this->door.seekg(0);
         this->lock.seekg(0);
         this->trigger.seekg(0);
-        if(target_board.compare("FIREFLY") == 0){
+        if(target_board.compare(DEVICE_NAME_FIREFLY) == 0){
             this->status = lock_status(4*this->lock_value + 2*this->door_value + this->trigger_value);
-        }else if(target_board.compare("DEEPTHINK") == 0){
+        }else if(target_board.compare(DEVICE_NAME_DEEPTHINK) == 0){
             this->status = lock_status(4*this->lock_value + 2*this->door_value + this->trigger_value+ 8);
         }
     } catch (int e) {
@@ -118,11 +118,11 @@ void doorLock::get_states(){
 // unlock doorLock trigger
 bool doorLock::door_open(){
     try{
-        if(target_board.compare("FIREFLY") == 0 ){
+        if(target_board.compare(DEVICE_NAME_FIREFLY) == 0 ){
             log.print_log("UNLOCK");
             this->trigger << "0";
             this->trigger.seekg(0);    
-        }else if(target_board.compare("DEEPTHINK") == 0 ){
+        }else if(target_board.compare(DEVICE_NAME_DEEPTHINK) == 0 ){
             log.print_log("UNLOCK");
             this->trigger << "1";
             this->trigger.seekg(0);    
