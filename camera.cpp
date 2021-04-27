@@ -205,15 +205,15 @@ bool camera::set_module_profile(std::string json){
     rapidjson::Document jsonData;
     jsonData.Parse(json.c_str());
     CameraModuleInfo module;
+    std::vector<CameraModuleInfo> saved_module = cameraModuleSetting->GetProfileList();
     int module_count = cameraModuleSetting->GetModuleinfoCount();
     if(!jsonData["camera_id"].IsNull() && jsonData["camera_id"].GetInt() < module_count){
         int camera_id = jsonData["camera_id"].GetInt();
-
         // module name / interface type / camera location / port number is not changed 
-        module.module_name = cameraModuleSetting->GetProfileList()[camera_id].module_name;
-        module.connected_info.interface_type = cameraModuleSetting->GetProfileList()[camera_id].connected_info.interface_type;
-        module.connected_info.camera_location = cameraModuleSetting->GetProfileList()[camera_id].connected_info.camera_location;
-        module.connected_info.port_num = cameraModuleSetting->GetProfileList()[camera_id].connected_info.port_num;
+        module.module_name = saved_module[camera_id].module_name;
+        module.connected_info.interface_type = saved_module[camera_id].connected_info.interface_type;
+        module.connected_info.camera_location = saved_module[camera_id].connected_info.camera_location;
+        module.connected_info.port_num = saved_module[camera_id].connected_info.port_num;
         
         module.connected_info.camera_id = jsonData["camera_id"].GetInt();
         module.exposure_time = jsonData["exposure_time"].GetInt();
