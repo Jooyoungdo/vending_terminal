@@ -150,15 +150,23 @@ public:
 
     // upload image to database
     int64_t database_upload(cv::Mat iter, std::string env_id, std::string type);
-    // operations of command from server
+    // operations of command set camera module config
     bool operate_camera_module_set(std::string event_payload);
+    // operations of command get camera module config
     bool operate_camera_module_get(std::string event_payload);
+    // operations of command say hello to new customer
     bool operate_customer_attribute(std::string event_payload);
+    // operations of command say goodbye to customer
     bool operate_goodbye(std::string event_payload);
+    // operations of command set sound volume
     bool operate_set_sound(std::string event_payload);
+    // operations of command get camera image
     bool operate_grab_image(std::string event_payload);
+    // operations of command get collect data set
     bool operate_collect_data(std::string event_payload);
+    // operations of command open door 
     bool operate_open_door(std::string event_payload);
+    // operations of command open door 
     bool operate_device_file_download(std::string event_payload);
     bool open_close_door(std::string event_payload,bool do_resonpse);
     void start_daemon();
