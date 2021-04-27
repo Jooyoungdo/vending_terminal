@@ -138,11 +138,11 @@ bool doorLock::door_open(){
 // lock doorLock trigger
 bool doorLock::door_close(){
      try{
-        if(target_board.compare("FIREFLY") == 0 ){
+        if(target_board.compare(DEVICE_NAME_FIREFLY) == 0 ){
             log.print_log("LOCK");
             this->trigger << "1";
             this->trigger.seekg(0);    
-        }else if(target_board.compare("DEEPTHINK") == 0 ){
+        }else if(target_board.compare(DEVICE_NAME_DEEPTHINK) == 0 ){
             log.print_log("LOCK");
             this->trigger << "0";
             this->trigger.seekg(0);    
