@@ -241,7 +241,7 @@ bool camera::set_module_profile(std::string json){
         return false;
     }
     for(int i=0;i<module_count;i++){
-        cameraModuleSetting->PrintModuleInfo(cameraModuleSetting->GetProfileList()[i]);
+        cameraModuleSetting->PrintModuleInfo(saved_module[i]);
     }
     return true;
 }
