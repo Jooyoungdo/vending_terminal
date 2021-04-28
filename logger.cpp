@@ -9,9 +9,9 @@
 // default initializer with log host
 logger::logger(std::string _log_host) {
     this->log_host = _log_host;
-    this->log_file_name_ = LOGFILE_ROOT_PATH + "log/" + currentDateTime() + "_log.txt";
-    this->cfg_file_name_ = LOGFILE_ROOT_PATH + "log/log_enable.cfg";
-    this->save_log = get_savelog_config();
+    //this->log_file_name_ = LOGFILE_ROOT_PATH + "log/" + currentDateTime() + "_log.txt";
+    this->cfg_file_name_ = LOGFILE_ROOT_PATH + "log/setting.json";
+    get_savelog_config(this->cfg_file_name_);
 }
 
 
@@ -32,7 +32,7 @@ void logger::print_log(std::string log_body) {
     char out_log[1000];
     sprintf(out_log, "[%s][%s] %s", currentDateTime().c_str(), this->log_host.c_str(), log_body.c_str());
     std::cout << out_log << std::endl;
-    if(this->save_log){
+    if(this->save_log_){
         save_log_to_file(out_log);
     } 
 }
@@ -44,7 +44,25 @@ void logger::save_log_to_file(const char *log){
     log_stream.close();
 }
 
-bool logger::get_savelog_config(){
-    std::ifstream file_stream(this->cfg_file_name_);
-    return file_stream.is_open();
+void logger::get_savelog_config(std::string cfg_file_name){
+    std::ifstream file_stream(cfg_file_name);
+    if(file_stream.is_open()){
+        rapidjson::IStreamWrapper stream_wrapper(file_stream);
+        rapidjson::Document json_doc;
+        json_doc.ParseStream(stream_wrapper);
+        for (auto& json_data : json_doc.GetArray()){
+            try {
+                this->save_log_ = json_data["log_to_file"].GetBool();
+                this->log_file_name_ = json_data["log_file_name"].GetString();
+            } catch (int e) {
+                std::cout << "parsing json error!!" << std::endl;
+                this->save_log_ = false;
+                this->log_file_name_ ="";
+            }
+        }
+    }else{
+        this->save_log_ = false;
+        return;
+    }
+    
 }

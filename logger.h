@@ -5,6 +5,12 @@
 #ifndef DAEMON_PROCESS_LOGGER_H
 #include <iostream>
 #include <string>
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/ostreamwrapper.h"
 #define DAEMON_PROCESS_LOGGER_H
 
 
@@ -17,8 +23,8 @@ private:
     std::string log_file_name_;
     std::string cfg_file_name_;
     void save_log_to_file(const char *log);
-    bool get_savelog_config();
-    bool save_log;
+    void get_savelog_config(std::string cfg_file_name);
+    bool save_log_;
 public:
     logger(std::string _log_host); // default initializer with log host
 
