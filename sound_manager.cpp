@@ -77,14 +77,15 @@ void AudioManager::SetSpeakerVolume(long volume_percent){
 
 std::string AudioManager::GetSoundFileRoot(){
 	//TODO: fix hardcoding path
-	const char * home_env = std::getenv("HOME");
-	if (home_env == nullptr){ 
-		return "";
-	}
-	else{
-		std::string home_env_str(home_env);
-		return home_env_str+ "/beyless_vending_terminal/sound/";
-	}
+	// const char * home_env = std::getenv("HOME");
+	// if (home_env == nullptr){ 
+	// 	return "";
+	// }
+	// else{
+	// 	std::string home_env_str(home_env);
+	// 	return home_env_str+ "/beyless_vending_terminal/sound/";
+	// }
+	return "/home/firefly/beyless_vending_terminal/sound/";
 	
 }
 

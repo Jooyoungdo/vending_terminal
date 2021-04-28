@@ -731,13 +731,14 @@ void terminal::update_device_info(){
 }
 
 std::string terminal::get_image_path(){
-    const char *home_env = std::getenv("HOME");
-    if (home_env == nullptr){
-        return "";
-    }
-    else{
-        std::string home_env_str(home_env);
-        return home_env_str + "/beyless_vending_terminal/image/";
-    }
+    // const char *home_env = std::getenv("HOME");
+    // if (home_env == nullptr){
+    //     return "";
+    // }
+    // else{
+    //     std::string home_env_str(home_env);
+    //     return home_env_str + "/beyless_vending_terminal/image/";
+    // }
+    return "/home/firefly/beyless_vending_terminal/image/";
 }
 
