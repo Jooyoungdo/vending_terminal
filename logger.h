@@ -12,8 +12,8 @@ class logger {
 private:
     std::string log_host; // log host
 
-    const std::string LOGFILE_ROOT_PATH = "/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/";
-    //const std::string LOGFILE_ROOT_PATH = "/home/firefly/beyless_vending_terminal/";
+    //const std::string LOGFILE_ROOT_PATH = "/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/";
+    const std::string LOGFILE_ROOT_PATH = "/home/firefly/beyless_vending_terminal/";
     std::string log_file_name_;
     std::string cfg_file_name_;
     void save_log_to_file(const char *log);
