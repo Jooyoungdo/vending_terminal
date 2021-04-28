@@ -131,9 +131,10 @@ void terminal::initialize_mqtt_client() {
 //    connOpts.set_clean_start(true);
     connOpts.set_user_name("beyless");
     connOpts.set_password("ws-beyless");
+    connOpts.set_automatic_reconnect(true);
     cli.set_connection_lost_handler([this](const std::string &) {
         log.print_log("connection lost");
-        exit(2);
+        //exit(2);
     });
 
     try {
