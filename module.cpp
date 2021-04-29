@@ -36,34 +36,18 @@ CameraModuleSetting* CameraModuleSetting::GetInstance(){
 CameraModuleInfo CameraModuleSetting::ConvertJsonToModuleInfo(rapidjson::Document *json_doc)
 {
     CameraModuleInfo module_info;
-    try {
-        for (auto& json_data : json_doc->GetArray()){
-            module_info.connected_info.camera_id = json_data["camera_id"].GetInt();
-            module_info.connected_info.port_num = json_data["port_num"].GetInt();
-            module_info.connected_info.camera_location = json_data["camera_location"].GetString();
-            module_info.connected_info.interface_type = json_data["interface_type"].GetString();
-            module_info.awb = json_data["awb"].GetBool();
-            module_info.aec = json_data["aec"].GetBool();
-            module_info.color_temperature=json_data["color_temperature"].GetInt();
-            module_info.exposure_time=json_data["exposure_time"].GetInt();
-            module_info.frame_height=json_data["frame_height"].GetInt();
-            module_info.frame_width=json_data["frame_width"].GetInt();
-            module_info.module_name=json_data["module_name"].GetString();
-        }
-    } catch(int e){
-        log.print_log("can't parse json data -> set default module config plz check");
-        module_info.connected_info.camera_id = 0;
-        module_info.connected_info.port_num = 0;
-        module_info.connected_info.camera_location = "TOP";
-        module_info.connected_info.interface_type = "USB";
-        module_info.awb = true;
-        module_info.aec = true;
-        module_info.color_temperature = 5000;
-        module_info.exposure_time = 0;
-        module_info.frame_height = 1920;
-        module_info.frame_width = 1080;
-        module_info.module_name = "DEEPTHINK";
-    }
+    
+    module_info.connected_info.camera_id = (*json_doc)["camera_id"].GetInt();
+    module_info.connected_info.port_num = (*json_doc)["port_num"].GetInt();
+    module_info.connected_info.camera_location = (*json_doc)["camera_location"].GetString();
+    module_info.connected_info.interface_type = (*json_doc)["interface_type"].GetString();
+    module_info.awb = (*json_doc)["awb"].GetBool();
+    module_info.aec = (*json_doc)["aec"].GetBool();
+    module_info.color_temperature = (*json_doc)["color_temperature"].GetInt();
+    module_info.exposure_time = (*json_doc)["exposure_time"].GetInt();
+    module_info.frame_height = (*json_doc)["frame_height"].GetInt();
+    module_info.frame_width = (*json_doc)["frame_width"].GetInt();
+    module_info.module_name = (*json_doc)["module_name"].GetString();
     return module_info;
 }
 rapidjson::Document CameraModuleSetting::ConvertModuleInfoToJson(CameraModuleInfo module_info){
@@ -76,7 +60,7 @@ rapidjson::Document CameraModuleSetting::ConvertModuleInfoToJson(CameraModuleInf
     json_value.SetString(module_info.module_name.c_str(), module_info.module_name.length());
     return_form.AddMember("module_name", json_value, allocator);
     json_value.SetString(module_info.connected_info.interface_type.c_str(), module_info.connected_info.interface_type.length());
-    return_form.AddMember("interface_name", json_value, allocator);
+    return_form.AddMember("interface_type", json_value, allocator);
     json_value.SetString(module_info.connected_info.camera_location.c_str(), module_info.connected_info.camera_location.length());
     return_form.AddMember("camera_location", json_value, allocator);
     json_value.SetInt(module_info.connected_info.port_num);
