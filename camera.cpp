@@ -169,6 +169,7 @@ bool camera::set_module_profile(std::string json){
     module_info.connected_info.interface_type = default_module_info.connected_info.interface_type;
     module_info.connected_info.camera_location = default_module_info.connected_info.camera_location;
     module_info.connected_info.port_num = default_module_info.connected_info.port_num;
+    module_info.module_name = default_module_info.module_name;
     
     module_info.exposure_time = jsonData["exposure_time"].GetInt();
     module_info.aec = jsonData["aec"].GetBool();
