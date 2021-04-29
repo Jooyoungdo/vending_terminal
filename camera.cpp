@@ -163,6 +163,13 @@ bool camera::set_module_profile(std::string json){
     rapidjson::Document jsonData;
     jsonData.Parse(json.c_str());
     CameraModuleInfo module_info;
+    CameraModuleInfo default_module_info =cameraModuleSetting->GetDefaultProfile();
+
+    module_info.connected_info.camera_id = default_module_info.connected_info.camera_id;
+    module_info.connected_info.interface_type = default_module_info.connected_info.interface_type;
+    module_info.connected_info.camera_location = default_module_info.connected_info.camera_location;
+    module_info.connected_info.port_num = default_module_info.connected_info.port_num;
+    
     module_info.exposure_time = jsonData["exposure_time"].GetInt();
     module_info.aec = jsonData["aec"].GetBool();
     module_info.awb = jsonData["awb"].GetBool();
