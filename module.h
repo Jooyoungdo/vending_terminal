@@ -56,34 +56,26 @@ private:
  
     static CameraModuleSetting* instance;
     std::vector<CameraModuleInfo> moduleinfo_list;
-    std::vector<CameraModuleInfo> default_moduleinfo_list;
-    logger log = logger("CAM_MODULE"); //logger object for print log
+    CameraModuleInfo default_module_info_;
+    logger log = logger("MODULE"); //logger object for print log
     const int MAX_CAMERA_COUNT = 10;
+    //const std::string SETTING_FILE_PATH = "/mnt/d/Beyless/0.project/2.firefly_rk3399/src/beyless_vending_terminal/camera_module_settings.json";
+    const std::string SETTING_FILE_PATH = "/home/firefly/beyless_vending_terminal/camera_module_settings.json";
     
 public:
     static CameraModuleSetting* GetInstance();
-    std::vector<CameraModuleInfo> GetProfileList();
-    int GetModuleinfoCount();
-    bool SetModuleinfo(std::string json);
-    void PrintModuleInfo(CameraModuleInfo moduleInfo);
     
-    bool InsertModuleInfo(int index,CameraModuleInfo moduleInfo);
-    bool AddModuleInfo(CameraModuleInfo moduleInfo);
-    bool UpdateProfile(std::vector <cv::VideoCapture> cameras);
-    CameraModuleInfo GetProfile(ConnectedInfo connInfo);
-    bool SetProfile(int camera_id,CameraModuleInfo moduleInfo);
+    CameraModuleInfo ConvertJsonToModuleInfo(rapidjson::Document *json_doc);
+    rapidjson::Document ConvertModuleInfoToJson(CameraModuleInfo module_info);
+    void PrintModuleInfo(CameraModuleInfo moduleInfo);
+    // read module setting from json
+    // if can't read json file, set default module setting 
+    bool ReadDefaultProfile();
+    bool WriteDefaultProfile(CameraModuleInfo module_info);
 
-    bool UpdateDefaultProfile(std::vector <cv::VideoCapture> cameras);
-    CameraModuleInfo GetDefaultProfile(int port_num, std::string camera_type);
-    CameraModuleInfo GetDefaultProfile(int camera_id);
-    bool SetDefaultProfile(int camera_id,CameraModuleInfo moduleInfo);
-    bool InitDefaultProfile();
-    bool ReadJsonFile(std::string file_name, std::vector<CameraModuleInfo>* moduleinfo_list);
-    bool WriteJsonFile(std::string file_name, std::vector<CameraModuleInfo> moduleinfo_list);
-    std::vector<CameraModuleInfo> ConvertJsonToModuleinfoList(rapidjson::Document *json_doc);
-    rapidjson::Document ConvertModuleinfoListToJson(std::vector<CameraModuleInfo> moduleInfo);
-    bool SaveProfileAsDefault(std::vector<CameraModuleInfo> moduleInfo);
-    const int SETTING_ALL_CAMERA_ID = -1;
+    bool UpdateSettings(std::vector <cv::VideoCapture> cameras);
+    CameraModuleInfo GetDefaultProfile();
+    void SetDefaultProfile(CameraModuleInfo module_info);
 
     
 };

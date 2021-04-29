@@ -44,23 +44,15 @@ camera::camera(std::string mode) {
                 std::regex re (regex_grammer[0].c_str());
                 std::smatch match;
                 if (std::regex_search(str, match, re, std::regex_constants::match_default)){
-
-
                     //FIXME: hardcoded code should be changed if mipi camera is used  
                     log.print_log( "camera device found on port number :" + match[1].str());
 
                     int port_num = std::stoi(match[1].str());
-                    CameraModuleInfo module = cameraModuleSetting->GetDefaultProfile(port_num,"USB");
-                    cameraModuleSetting->AddModuleInfo(module);
-                    
-                    //cv::VideoCapture _cap(prefix_path + match.str(), cv::CAP_V4L);
-    //                _cap.open(());
 #ifdef OLD_OPENCV
                     camera_capture.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), CV_CAP_V4L));
 #else
                     camera_capture.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), cv::CAP_V4L));
 #endif
-
                 }
             }
             // this is only for deepthink board, it has 10 usb port
@@ -69,17 +61,9 @@ camera::camera(std::string mode) {
                 std::regex re (regex_grammer[1].c_str());
                 std::smatch match;
                 if (std::regex_search(str, match, re, std::regex_constants::match_default)){
-
-
                     //FIXME: hardcoded code should be changed if mipi camera is used  
                     int port_num = std::stoi(match[1].str()) + 5 ;
                     log.print_log( "camera device found on port number :" + std::to_string(port_num));
-                    
-                    CameraModuleInfo module = cameraModuleSetting->GetDefaultProfile(port_num,"USB");
-                    cameraModuleSetting->AddModuleInfo(module);
-                    
-                    //cv::VideoCapture _cap(prefix_path + match.str(), cv::CAP_V4L);
-    //                _cap.open(());
 #ifdef OLD_OPENCV
                     camera_capture.emplace_back(cv::VideoCapture(prefix_path.c_str() + match.str(), CV_CAP_V4L));
 #else
@@ -97,32 +81,6 @@ camera::camera(std::string mode) {
 
         else{
             log.print_log("can't find connected USB type camrea");
-#ifdef DEBUG_BAIVE
-            //Set Dummy Camrea Info
-            log.print_log("set dummy camera info");
-            CameraModuleInfo module;
-            module.connected_info.port_num = 0;
-            module.connected_info.camera_id = 0;
-            module.exposure_time = 0;
-            module.color_temperature = 5000;
-            module.frame_width = 1920;
-            module.frame_height = 1080;
-            module.awb = true;
-            module.aec = true;
-            cameraModuleSetting->AddModuleInfo(module);
-            //log.print_log("camera[0] info 1920 x 1080, port num 0, camera_id 0, exposure time 0,  ");
-            camera_capture.emplace_back(cv::VideoCapture(0,cv::CAP_V4L));
-            module.connected_info.port_num = 1;
-            module.connected_info.camera_id = 1;
-            module.exposure_time = 0;
-            module.color_temperature = 5000;
-            module.frame_width = 1920;
-            module.frame_height = 1080;
-            module.awb = true;
-            module.aec = true;
-            cameraModuleSetting->AddModuleInfo(module);
-            camera_capture.emplace_back(cv::VideoCapture(1,cv::CAP_V4L));
-#endif
         }
     }
 }
@@ -204,49 +162,20 @@ int camera::get_image_count() {
 bool camera::set_module_profile(std::string json){
     rapidjson::Document jsonData;
     jsonData.Parse(json.c_str());
-    CameraModuleInfo module;
-    std::vector<CameraModuleInfo> saved_module = cameraModuleSetting->GetProfileList();
-    int module_count = cameraModuleSetting->GetModuleinfoCount();
-    if(!jsonData["camera_id"].IsNull() && jsonData["camera_id"].GetInt() < module_count){
-        int camera_id = jsonData["camera_id"].GetInt();
-        // module name / interface type / camera location / port number is not changed 
-        module.module_name = saved_module[camera_id].module_name;
-        module.connected_info.interface_type = saved_module[camera_id].connected_info.interface_type;
-        module.connected_info.camera_location = saved_module[camera_id].connected_info.camera_location;
-        module.connected_info.port_num = saved_module[camera_id].connected_info.port_num;
-        
-        module.connected_info.camera_id = jsonData["camera_id"].GetInt();
-        module.exposure_time = jsonData["exposure_time"].GetInt();
-        module.aec = jsonData["aec"].GetBool();
-        module.awb = jsonData["awb"].GetBool();
-        module.color_temperature = jsonData["color_temperature"].GetInt();
-        module.frame_width = jsonData["frame_width"].GetInt();
-        module.frame_height = jsonData["frame_height"].GetInt();
-
-        if(camera_id >=0 && camera_id < module_count){
-            //setting single camera profile
-            cameraModuleSetting->InsertModuleInfo(camera_id,module);
-        }else if(camera_id == -1){
-            //setting all camera profile
-            for(int i =0;i<module_count;i++){
-                cameraModuleSetting->InsertModuleInfo(i,module);
-            }
-        }else{
-            log.print_log(("can't find camera_id(" + std::to_string(camera_id)+")"));
-            return false;
-        }
-    }else{
-        std::string port_string = jsonData["camera_id"].IsNull()?"NULL": std::to_string( jsonData["camera_id"].GetInt());
-        log.print_log(("can't find camera_id(" +port_string +")"));
-        return false;
-    }
-    for(int i=0;i<module_count;i++){
-        cameraModuleSetting->PrintModuleInfo(saved_module[i]);
-    }
+    CameraModuleInfo module_info;
+    module_info.exposure_time = jsonData["exposure_time"].GetInt();
+    module_info.aec = jsonData["aec"].GetBool();
+    module_info.awb = jsonData["awb"].GetBool();
+    module_info.color_temperature = jsonData["color_temperature"].GetInt();
+    module_info.frame_width = jsonData["frame_width"].GetInt();
+    module_info.frame_height = jsonData["frame_height"].GetInt();
+    cameraModuleSetting->SetDefaultProfile(module_info);
+    cameraModuleSetting->WriteDefaultProfile(module_info);
+    cameraModuleSetting->PrintModuleInfo(module_info);
     return true;
 }
 
 bool camera::update_module_profile(){
-    cameraModuleSetting->UpdateProfile(camera_capture);
+    cameraModuleSetting->UpdateSettings(camera_capture);
     return true;
 }
