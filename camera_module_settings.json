@@ -1,15 +1,1 @@
-[
-    {
-        "module_name":"DEEPTHINK",  
-        "interface_type": "USB",
-        "camera_location": "TOP",
-        "port_num": 0,
-        "camera_id": 0,
-        "aec":true,
-        "awb":true,
-        "color_temperature":5000,
-        "exposure_time":0,
-        "frame_width":1920,
-        "frame_height":1080
-    }
-]
+{"module_name":"DEEPTHINK","interface_type":"USB","camera_location":"TOP","port_num":0,"camera_id":0,"aec":true,"awb":true,"color_temperature":5000,"exposure_time":0,"frame_width":1920,"frame_height":1080}
