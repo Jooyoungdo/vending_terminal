@@ -131,6 +131,7 @@ bool CameraModuleSetting::UpdateSettings(std::vector <cv::VideoCapture> cameras)
         cameras[i].set(cv::CAP_PROP_EXPOSURE, default_module_info_.exposure_time);
         cameras[i].set(cv::CAP_PROP_WB_TEMPERATURE, default_module_info_.color_temperature);
     }
+    log.print_log("UpdateSettings success");
     return true;
 }
 
@@ -146,6 +147,7 @@ bool CameraModuleSetting::UpdateSettings(cv::VideoCapture cameras){
     cameras.set(cv::CAP_PROP_AUTO_WB, default_module_info_.awb);
     cameras.set(cv::CAP_PROP_EXPOSURE, default_module_info_.exposure_time);
     cameras.set(cv::CAP_PROP_WB_TEMPERATURE, default_module_info_.color_temperature);
+    log.print_log("UpdateSettings success");
     return true;
 }
 
