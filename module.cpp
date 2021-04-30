@@ -157,13 +157,11 @@ void CameraModuleSetting::SetDefaultProfile(CameraModuleInfo module_info){
 }
 
 bool CameraModuleSetting::CheckSettingValue(){
-    if(default_module_info_.frame_width < 0)
+    if(default_module_info_.frame_width <= 0)
         return false;
-    if (default_module_info_.frame_width < 0)
+    if (default_module_info_.frame_width <= 0)
         return false;
-    if(default_module_info_.color_temperature < 0 || default_module_info_.color_temperature > 10000)
-        return false;
-    if(default_module_info_.frame_width < 0)
+    if(default_module_info_.color_temperature <= 0 || default_module_info_.color_temperature > 10000)
         return false;
     return true;            
 }
