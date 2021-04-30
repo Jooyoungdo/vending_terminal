@@ -118,23 +118,17 @@ bool CameraModuleSetting::WriteDefaultProfile(CameraModuleInfo module_info){
     return true;
 }
 bool CameraModuleSetting::UpdateSettings(std::vector <cv::VideoCapture> cameras){
+
+    if(!CheckSettingValue()){
+        return false;
+    }
     for (int i = 0; i < cameras.size(); i++){
-        if (default_module_info_.frame_width > 0)
-            cameras[i].set(cv::CAP_PROP_FRAME_WIDTH, default_module_info_.frame_width);
-        if (default_module_info_.frame_height > 0)
-            cameras[i].set(cv::CAP_PROP_FRAME_HEIGHT, default_module_info_.frame_height);
-        else
-            return false;
+        cameras[i].set(cv::CAP_PROP_FRAME_WIDTH, default_module_info_.frame_width);
+        cameras[i].set(cv::CAP_PROP_FRAME_HEIGHT, default_module_info_.frame_height);
         cameras[i].set(cv::CAP_PROP_AUTO_EXPOSURE, default_module_info_.aec);
         cameras[i].set(cv::CAP_PROP_AUTO_WB, default_module_info_.awb);
-        if (default_module_info_.exposure_time <= 13 && default_module_info_.exposure_time >= -13)
-            cameras[i].set(cv::CAP_PROP_EXPOSURE, default_module_info_.exposure_time);
-        else
-            return false;
-        if (default_module_info_.color_temperature <= 10000 && default_module_info_.color_temperature >= 0)
-            cameras[i].set(cv::CAP_PROP_WB_TEMPERATURE, default_module_info_.color_temperature);
-        else
-            return false;
+        cameras[i].set(cv::CAP_PROP_EXPOSURE, default_module_info_.exposure_time);
+        cameras[i].set(cv::CAP_PROP_WB_TEMPERATURE, default_module_info_.color_temperature);
     }
     return true;
 }
@@ -143,4 +137,16 @@ CameraModuleInfo CameraModuleSetting::GetDefaultProfile(){
 }
 void CameraModuleSetting::SetDefaultProfile(CameraModuleInfo module_info){
     default_module_info_ = module_info;
+}
+
+bool CameraModuleSetting::CheckSettingValue(){
+    if(default_module_info_.frame_width < 0)
+        return false;
+    if (default_module_info_.frame_width < 0)
+        return false;
+    if(default_module_info_.color_temperature < 0 || default_module_info_.color_temperature > 10000)
+        return false;
+    if(default_module_info_.frame_width < 0)
+        return false;
+    return true;            
 }

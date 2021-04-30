@@ -72,7 +72,7 @@ camera::camera(std::string mode) {
 
                 }
             }
-
+            cameraModuleSetting->UpdateSettings(camera_capture);
             //TODO: 기본 카메라의 프로필의 연결 정보와 장착된 카메라의 연결 정보 비교
             //TODO: 동일 할 경우 기본 프로필의 카메라 설정 정보로 업데이트
             //TODO: 다를 경우 ?로그 찍고 업데이트 ㄴㄴ
@@ -170,7 +170,7 @@ bool camera::set_module_profile(std::string json){
     module_info.connected_info.camera_location = default_module_info.connected_info.camera_location;
     module_info.connected_info.port_num = default_module_info.connected_info.port_num;
     module_info.module_name = default_module_info.module_name;
-    
+
     module_info.exposure_time = jsonData["exposure_time"].GetInt();
     module_info.aec = jsonData["aec"].GetBool();
     module_info.awb = jsonData["awb"].GetBool();
