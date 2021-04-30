@@ -120,6 +120,7 @@ bool CameraModuleSetting::WriteDefaultProfile(CameraModuleInfo module_info){
 bool CameraModuleSetting::UpdateSettings(std::vector <cv::VideoCapture> cameras){
 
     if(!CheckSettingValue()){
+        log.print_log("CheckSettingValue fail!!!");
         return false;
     }
     for (int i = 0; i < cameras.size(); i++){
@@ -132,6 +133,22 @@ bool CameraModuleSetting::UpdateSettings(std::vector <cv::VideoCapture> cameras)
     }
     return true;
 }
+
+bool CameraModuleSetting::UpdateSettings(cv::VideoCapture cameras){
+
+    if(!CheckSettingValue()){
+        log.print_log("CheckSettingValue fail!!!");
+        return false;
+    }
+    cameras.set(cv::CAP_PROP_FRAME_WIDTH, default_module_info_.frame_width);
+    cameras.set(cv::CAP_PROP_FRAME_HEIGHT, default_module_info_.frame_height);
+    cameras.set(cv::CAP_PROP_AUTO_EXPOSURE, default_module_info_.aec);
+    cameras.set(cv::CAP_PROP_AUTO_WB, default_module_info_.awb);
+    cameras.set(cv::CAP_PROP_EXPOSURE, default_module_info_.exposure_time);
+    cameras.set(cv::CAP_PROP_WB_TEMPERATURE, default_module_info_.color_temperature);
+    return true;
+}
+
 CameraModuleInfo CameraModuleSetting::GetDefaultProfile(){
     return default_module_info_;
 }
