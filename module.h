@@ -74,6 +74,7 @@ public:
     bool WriteDefaultProfile(CameraModuleInfo module_info);
 
     bool UpdateSettings(std::vector <cv::VideoCapture> cameras);
+    bool UpdateSettings(cv::VideoCapture cameras);
     CameraModuleInfo GetDefaultProfile();
     void SetDefaultProfile(CameraModuleInfo module_info);
     bool CheckSettingValue();
