@@ -22,7 +22,7 @@ camera::camera(std::string mode) {
     std::string regex_grammer[] ={"platform-fe3c0000.usb-usb-0:1.(\\d):1.0-video-index0",
                                     "platform-fe380000.usb-usb-0:1.(\\d):1.0-video-index0"};
     std::string prefix_path = "/dev/v4l/by-path/" ;
-    
+    camera_mutex = PTHREAD_MUTEX_INITIALIZER;
     // if mode is not in auto detect, call default initializer
     std::cout << mode  << std::endl;
     cameraModuleSetting = CameraModuleSetting::GetInstance();
@@ -73,9 +73,7 @@ camera::camera(std::string mode) {
                 }
             }
             cameraModuleSetting->UpdateSettings(camera_capture);
-            //TODO: 기본 카메라의 프로필의 연결 정보와 장착된 카메라의 연결 정보 비교
-            //TODO: 동일 할 경우 기본 프로필의 카메라 설정 정보로 업데이트
-            //TODO: 다를 경우 ?로그 찍고 업데이트 ㄴㄴ
+            
         
         }
 
@@ -112,6 +110,7 @@ bool camera::grab_frame() {
             iter->set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
 #endif
             // for stable output quality, get 5 frames and use last one
+            pthread_mutex_lock(&camera_mutex);
             cv::Mat img;
             for(int i = 0; i<5; i++)
                 *iter >> img;
@@ -121,6 +120,7 @@ bool camera::grab_frame() {
 
             images.push_back(roi);
             roi.release();
+            pthread_mutex_unlock(&camera_mutex);
         }
     } catch (cv::Exception& e) {
         log.print_log(("EXCEPTION CAUGHT : " + std::string(e.what())));

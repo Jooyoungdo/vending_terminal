@@ -17,6 +17,7 @@
 
 #include "logger.h"
 #include "debug.h"
+#include <pthread.h>
 #define DAEMON_PROCESS_CAMERA_H
 
 class camera {
@@ -25,7 +26,7 @@ private:
     
     std::vector <cv::Mat> images; // list of latest images from camera
     CameraModuleSetting* cameraModuleSetting;
-    logger log = logger("CAMERA"); //logger object for print log
+    logger log = logger("CAM"); //logger object for print log
 public:
     camera(); //defualt initializer, deprecated
     camera(std::string mode);
@@ -38,6 +39,7 @@ public:
 
     bool set_module_profile(std::string jsonData);
     bool update_module_profile();
+    pthread_mutex_t camera_mutex;
 };
 
 
