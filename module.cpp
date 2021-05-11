@@ -125,7 +125,11 @@ bool CameraModuleSetting::UpdateSettings(std::vector <cv::VideoCapture> cameras)
     for (int i = 0; i < cameras.size(); i++){
         cameras[i].set(cv::CAP_PROP_FRAME_WIDTH, default_module_info_.frame_width);
         cameras[i].set(cv::CAP_PROP_FRAME_HEIGHT, default_module_info_.frame_height);
-        cameras[i].set(cv::CAP_PROP_AUTO_EXPOSURE, default_module_info_.aec);
+        // to enable auto exposure control, set 3
+        // to disable auto exposure control, set 1
+        // TODO: this value has no standard!!! it depends on usb camera manufactor!!!!
+        //       if usb camera is changed, should be check this value!!!!!
+        cameras[i].set(cv::CAP_PROP_AUTO_EXPOSURE, default_module_info_.aec? 3 :1);
         cameras[i].set(cv::CAP_PROP_AUTO_WB, default_module_info_.awb);
         cameras[i].set(cv::CAP_PROP_EXPOSURE, default_module_info_.exposure_time);
         cameras[i].set(cv::CAP_PROP_WB_TEMPERATURE, default_module_info_.color_temperature);
