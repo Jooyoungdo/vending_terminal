@@ -63,19 +63,87 @@ private:
     const std::string SETTING_FILE_PATH = "/home/firefly/beyless_vending_terminal/camera_module_settings.json";
     
 public:
+    /**
+     * @brief Get the Instance object
+     * 
+     * @return CameraModuleSetting* 
+     */
     static CameraModuleSetting* GetInstance();
     
+    /**
+     * @brief convert json format to CameraModuleInfo
+     * 
+     * @param json_doc - containing camera module info with json format
+     * @return CameraModuleInfo, containing camera module info with struct CameraModuleInfo
+     */
     CameraModuleInfo ConvertJsonToModuleInfo(rapidjson::Document *json_doc);
+
+    /**
+     * @brief convert CameraModuleInfo to json format
+     * 
+     * @param module_info 
+     * @return rapidjson::Document 
+     */
     rapidjson::Document ConvertModuleInfoToJson(CameraModuleInfo module_info);
+
+    /**
+     * @brief print module information
+     * 
+     * @param moduleInfo 
+     */
     void PrintModuleInfo(CameraModuleInfo moduleInfo);
-    // read module setting from json
-    // if can't read json file, set default module setting 
+    
+    /**
+     * @brief read module setting from json file(camera_module_settings.json)
+     * if can't read json file, set default module setting   
+     * 
+     * @return if read default profile success, return true  
+     */
     bool ReadDefaultProfile();
+
+    /**
+     * @brief write module setting as json file to save(camera_module_settings.json)
+     * 
+     * @param module_info 
+     * @return if write success, return true
+     */
     bool WriteDefaultProfile(CameraModuleInfo module_info);
 
+    /**
+     * @brief if received command for update new camera setting from server, update camera setting
+     * 
+     * @param cameras :  
+     * @return if update success, return true 
+     */
     bool UpdateSettings(std::vector <cv::VideoCapture> cameras);
+
+    /**
+     * @brief : Print Settings of USB Cameras
+     * 
+     * @param cameras : USB Camera Objects
+     * @return true   : Print Success
+     * @return false  : Print Fail
+     */
+    bool PrintSettings(std::vector <cv::VideoCapture> cameras);
+    /**
+     * @brief Get the Default Profile object
+     * 
+     * @return CameraModuleInfo 
+     */
     CameraModuleInfo GetDefaultProfile();
+
+    /**
+     * @brief Set the Default Profile object
+     * 
+     * @param module_info 
+     */
     void SetDefaultProfile(CameraModuleInfo module_info);
+
+    /**
+     * @brief Validate Camera Module Setting Values
+     * 
+     * @return if setting value is valid, return true  
+     */
     bool CheckSettingValue();
 
     

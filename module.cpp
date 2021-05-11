@@ -132,6 +132,24 @@ bool CameraModuleSetting::UpdateSettings(std::vector <cv::VideoCapture> cameras)
     }
     return true;
 }
+
+bool CameraModuleSetting::PrintSettings(std::vector <cv::VideoCapture> cameras){
+
+    
+    for (int i = 0; i < cameras.size(); i++){
+        CameraModuleInfo moduleInfo;
+        moduleInfo.frame_width = cameras[i].get(cv::CAP_PROP_FRAME_WIDTH);
+        moduleInfo.frame_height = cameras[i].get(cv::CAP_PROP_FRAME_HEIGHT);
+        moduleInfo.aec = cameras[i].get(cv::CAP_PROP_AUTO_EXPOSURE);
+        moduleInfo.awb = cameras[i].get(cv::CAP_PROP_AUTO_WB);
+        moduleInfo.exposure_time = cameras[i].get(cv::CAP_PROP_EXPOSURE);
+        moduleInfo.color_temperature =  cameras[i].get(cv::CAP_PROP_WB_TEMPERATURE);
+        PrintModuleInfo(moduleInfo);
+        
+    }
+    return true;
+}
+
 CameraModuleInfo CameraModuleSetting::GetDefaultProfile(){
     return default_module_info_;
 }
@@ -142,7 +160,7 @@ void CameraModuleSetting::SetDefaultProfile(CameraModuleInfo module_info){
 bool CameraModuleSetting::CheckSettingValue(){
     if(default_module_info_.frame_width < 0)
         return false;
-    if (default_module_info_.frame_width < 0)
+    if (default_module_info_.frame_height < 0)
         return false;
     if(default_module_info_.color_temperature < 0 || default_module_info_.color_temperature > 10000)
         return false;
