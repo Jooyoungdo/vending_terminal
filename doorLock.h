@@ -65,7 +65,7 @@ protected:
     std::fstream door_power;
     lock_status status;
 
-    logger log = logger("DOOR LOCK");
+    logger log = logger("DOOR");
     std::string target_board;
     const int FIREFLY_LOCK_SENSOR_GPIO = 42;
     const int FIREFLY_DOOR_SENSOR_GPIO = 39;
@@ -87,19 +87,68 @@ public:
     // reconf all pin mapping, deprecated
     void reset_pins();
     // refresh all pin states
+
+    /**
+     * @brief Get the states to status variable
+     * 
+     */
     void get_states();
-    // unlock
+    
+    /**
+     * @brief open the door
+     * 
+     * @return true - success
+     * @return false - fail
+     */
     bool door_open();
-    // lock
+    
+    /**
+     * @brief close the door 
+     * 
+     * @return true - success
+     * @return false - fail
+     */
     bool door_close();
-    // wait until door open
+    
+    /**
+     * @brief wait until the door get open phsically  
+     * 
+     * @return true, if door is opend
+     * @return false, if door is not opened
+     */
     bool wait_open();
-    // wait until door close
+    
+    /**
+     * @brief wait until the door get close physically
+     * 
+     * @return true, if door is closed
+     * @return false, if dooe is not closed
+     */
     bool wait_close();
     // check doorLock state in WAIT(LOCK CLOSE)
+
+    /**
+     * @brief check door lock is ok to control
+     * 
+     * @return true, if door lock staus is LOCK_CLOSE
+     * @return false, if door lock staus is not LOCK_CLOSE
+     */
     bool is_ready();
 
+    /**
+     * @brief init deepthink board door lock gpio settings
+     * 
+     * @return true, success
+     * @return false, fail
+     */
     bool init_deepthink_doorlock_gpios();
+
+    /**
+     * @brief init firefly board door lock gpio settings
+     * 
+     * @return true 
+     * @return false 
+     */
     bool init_firefly_doorlock_gpios();
 };
 #endif //DAEMON_PROCESS_DOORLOCK_H

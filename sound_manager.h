@@ -57,15 +57,46 @@ private:
     const snd_pcm_format_t SOUND_FORMAT = SND_PCM_FORMAT_S16_LE;
     const std::string PCM_DEVICE = "default";
 
-    
+    /**
+     * @brief : Play Open Sound 
+     * 
+     */
     void PlayOpenSound();
+
+    /**
+     * @brief : Play Close Sound 
+     * 
+     */
     void PlayCloseSound();
+
+    /**
+     * @brief : Play Greeting Sound 
+     * 
+     */
     void PlayGreetingSound();
+
+    /**
+     * @brief : Play Greeting Sound to the customers, not the first time
+     * 
+     */
     void PlayReGreetingSound();
+
+    /**
+     * @brief : Play Goodbye Sound
+     * 
+     */
     void PlayGoodByeSound();
+
+    /**
+     * @brief : Play sound with sound file information
+     * 
+     * @param sound_file_info : include sound file information
+     */
     void Play(AudioFileInfo sound_file_info);
-    snd_pcm_t *pcm_handle;
-    logger log = logger("SOUND");
+
+    snd_pcm_t *pcm_handle; // pulse control module handle
+
+    logger log = logger("SOUND"); // logger object
 
 };
 

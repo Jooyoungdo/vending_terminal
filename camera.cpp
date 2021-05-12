@@ -184,6 +184,5 @@ bool camera::set_module_profile(std::string json){
 }
 
 bool camera::update_module_profile(){
-    cameraModuleSetting->UpdateSettings(camera_capture);
-    return true;
+    return cameraModuleSetting->UpdateSettings(camera_capture);
 }

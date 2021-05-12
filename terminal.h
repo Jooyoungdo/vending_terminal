@@ -125,9 +125,6 @@ public:
     
     void stop_daemon();
     bool is_daemon_stoped();
-    const std::string TARGET_BOARD_FIREFLY = "FIREFLY";
-    const std::string TARGET_BOARD_DEEPTHINK = "DEEPTHINK";
-
     // initialize MQTT client, all publisher & subscriber
     void initialize_mqtt_client();
     //initialize MYSQL database
@@ -150,28 +147,123 @@ public:
 
     // upload image to database
     int64_t database_upload(cv::Mat iter, std::string env_id, std::string type);
-    // operations of command set camera module config
+
+    /**
+     * @brief : operation of setting camera module config
+     * 
+     * @param event_payload : command data from server
+     * @return true : command success
+     * @return false : command fail
+     */
     bool operate_camera_module_set(std::string event_payload);
-    // operations of command get camera module config
+    
+    /**
+     * @brief : operation of getting camera module config
+     * 
+     * @param event_payload : command data from server
+     * @return true : command success
+     * @return false : command fail
+     */
     bool operate_camera_module_get(std::string event_payload);
-    // operations of command say hello to new customer
+    
+    /**
+     * @brief : operation of saying hello to new customer
+     * 
+     * @param event_payload : command data from server
+     * @return true : command success
+     * @return false : command fail
+     */
     bool operate_customer_attribute(std::string event_payload);
-    // operations of command say goodbye to customer
+    
+    /**
+     * @brief : operation of saying goodbye to the customer
+     * 
+     * @param event_payload : command data from server
+     * @return true : command success
+     * @return false : command fail
+     */
     bool operate_goodbye(std::string event_payload);
-    // operations of command set sound volume
+    
+    /**
+     * @brief : operation of setting sound volume
+     * 
+     * @param event_payload : command data from server
+     * @return true : command success
+     * @return false : command fail
+     */
     bool operate_set_sound(std::string event_payload);
-    // operations of command get camera image
+    
+    /**
+     * @brief : operation of grab image
+     * 
+     * @param event_payload : command data from server
+     * @return true : command success
+     * @return false : command fail
+     */
     bool operate_grab_image(std::string event_payload);
-    // operations of command get collect data set
+    
+    /**
+     * @brief : operationg of collect data set
+     * 
+     * @param event_payload : command data from server
+     * @return true : command success
+     * @return false : command fail
+     */
     bool operate_collect_data(std::string event_payload);
-    // operations of command open door 
+    
+    /**
+     * @brief : operation of open the door
+     * 
+     * @param event_payload : command data from server
+     * @return true : command success
+     * @return false : command fail
+     */
     bool operate_open_door(std::string event_payload);
-    // operations of command open door 
+    
+    /**
+     * @brief : operation of file download(sound only now)
+     * 
+     * @param event_payload : command data from server
+     * @return true : command success
+     * @return false : command fail
+     */
     bool operate_device_file_download(std::string event_payload);
+
+    /**
+     * @brief : open and close door 
+     * open door -> wait open -> close door -> wait close 
+     * 
+     * @param event_payload : command data from server
+     * @param do_resonpse : if true, response to server(mqtt message)
+     * @return true 
+     * @return false 
+     */
     bool open_close_door(std::string event_payload,bool do_resonpse);
+
+    /**
+     * @brief : start daemon thread
+     * 
+     */
     void start_daemon();
+    /**
+     * @brief : thread of receive and send response 
+     * receive mqtt message from server and response to server 
+     */
     void callback_rpc();
+    
+    /**
+     * @brief not used yet, this function make server to know device info
+     * 
+     */
     void update_device_info();
+
+    /**
+     * @brief : download file from server 
+     * 
+     * @param event_payload : command data from server
+     * @return true : download success
+     * @return false : download fail
+     */
     bool download_file(std::string event_payload);
 };
 
