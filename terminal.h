@@ -71,6 +71,7 @@ private:
     const std::string MQTT_MESSAGE_TYPE_SET_SOUND = "set_sound";
     const std::string MQTT_MESSAGE_TYPE_DEVICE_FILE_DOWNLOAD = "file_download";
 
+    const int CONNECT_CHECK_TIME_SEC = 5 ; // connect check interval
     //std::string client_topics[]={};
 
     // MQTT client QOS (will be modified)
@@ -112,6 +113,9 @@ private:
     // std::string event = "NONE";
     // std::string event_payload = "NONE";
 
+    pthread_cond_t mqtt_connect_cond_;
+    pthread_mutex_t mqtt_connect_mutex_;
+
     pthread_cond_t cond;
     pthread_mutex_t mutex;
     bool terminate_program = false;
@@ -123,29 +127,76 @@ public:
     terminal(std::string _SERVER_ADDRESS, int _QOS, std::string _user_id, std::string _topic,std::string target_board ,std::string serial_number, std::string project_ver);
     ~terminal();
     
-    void stop_daemon();
-    bool is_daemon_stoped();
-    // initialize MQTT client, all publisher & subscriber
-    void initialize_mqtt_client();
-    //initialize MYSQL database
+    /**
+     * @brief kill thread
+     * 
+     */
+    void stop_thread();
+
+    /**
+     * @brief return flag of thread state
+     * 
+     * @return true : thread stopped
+     * @return false : thread working
+     */
+    bool is_thread_stoped();
+
+    /**
+     * @brief initialize MYSQL database
+     * 
+     * this is just for internal test code
+     * @return true : init success
+     * @return false : init fail
+     */
     bool initialize_MySQL_connector();
 
     // mqsql publish given string type payload (will be modified)
+    /**
+     * @brief publish mqtt message
+     * 
+     * @param payload : mqtt message
+     * @param topic : subscribe toip
+     */
     void mqtt_publish(std::string payload,std::string topic);
 
-    // doorLock_daemon, deprecated
-    void doorLock_daemon();
-
-    // post image using HTTP protocol
+    /**
+     * @brief upload image 
+     * 
+     * @param json : data
+     * @return true : upload success
+     * @return false : upload fail
+     */
     bool post_image(std::string json);
 
     // create json type response form
+
+    /**
+     * @brief Create a response form object
+     * 
+     * @param json : json to response form
+     * @param type : message type
+     * @param msg : message
+     * @param result :operate results
+     * @return std::string : return response form
+     */
     std::string create_response_form(std::string json, std::string type, std::string msg, bool result);
 
-    // init json member depends on its type
+    /**
+     * @brief init json member
+     * 
+     * @param type : mqtt message type
+     * @return std::vector<std::string> : json data
+     */
     std::vector<std::string> init_json_member(std::string type);
 
-    // upload image to database
+    /**
+     * @brief upload data to internal database
+     * 
+     * @param iter 
+     * @param env_id 
+     * @param type : message type
+     * @return int64_t 
+     */
     int64_t database_upload(cv::Mat iter, std::string env_id, std::string type);
 
     /**
@@ -244,12 +295,12 @@ public:
      * @brief : start daemon thread
      * 
      */
-    void start_daemon();
+    void create_mqtt_message_thread();
     /**
      * @brief : thread of receive and send response 
      * receive mqtt message from server and response to server 
      */
-    void callback_rpc();
+    void mqtt_message_thread();
     
     /**
      * @brief not used yet, this function make server to know device info
@@ -265,6 +316,19 @@ public:
      * @return false : download fail
      */
     bool download_file(std::string event_payload);
+
+    /**
+     * @brief Create a mqtt connect thread object
+     * 
+     */
+    void create_mqtt_connect_thread();
+    /**
+     * @brief mqtt connect thread 
+     * 
+     * check connection with server periodically
+     * 
+     */
+    void mqtt_connect_thread();
 };
 
 #endif //DAEMON_PROCESS_TERMINAL_H

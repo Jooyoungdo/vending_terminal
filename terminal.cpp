@@ -35,6 +35,8 @@ terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
     this->subjects.push_back(mqtt::topic(cli, MQTT_SERVER_TOPIC_AI_PREFIX+_topic, _QOS));
     
 
+    mqtt_connect_cond_ = PTHREAD_COND_INITIALIZER;
+    mqtt_connect_mutex_ = PTHREAD_MUTEX_INITIALIZER;
     cond = PTHREAD_COND_INITIALIZER;
     mutex = PTHREAD_MUTEX_INITIALIZER;
 }
@@ -42,6 +44,8 @@ terminal::terminal(std::string _SERVER_ADDRESS, int _QOS,
 terminal::~terminal(){
     pthread_mutex_destroy(&mutex);
     pthread_cond_destroy(&cond);
+    pthread_mutex_destroy(&mqtt_connect_mutex_);
+    pthread_cond_destroy(&mqtt_connect_cond_);
 }
 // send taken pictures to remote server using http protocol
 size_t noop_cb(void *ptr, size_t size, size_t nmemb, void *data) {
@@ -123,62 +127,77 @@ bool terminal::post_image(std::string json) {
 
 }
 
-// initialize MQTT client service, register call back function with lambda function (will be modified soon)
-void terminal::initialize_mqtt_client() {
-    connOpts.set_keep_alive_interval(1200);
-//    connOpts.set_mqtt_version(MQTTVERSION_5);
-    connOpts.set_clean_session(false);
-//    connOpts.set_clean_start(true);
-    connOpts.set_user_name("beyless");
-    connOpts.set_password("ws-beyless");
-    //connOpts.set_automatic_reconnect(true);
-    cli.set_connection_lost_handler([this](const std::string &) {
-        log.print_log("connection lost");
-        exit(2);
-    });
+void terminal::create_mqtt_connect_thread(){
+    std::thread mqtt_thread(&terminal::mqtt_connect_thread, this);
+    mqtt_thread.detach();
+}
 
-    try {
-        auto tok = cli.connect(connOpts);
-        tok->wait();
+void terminal::mqtt_connect_thread(){
 
-        // auto subOpts = mqtt::subscribe_options(NO_LOCAL);
-        // pub1.subscribe(subOpts)->wait();
-        // log.print_log("publisher1 connected");
-        // pub2.subscribe(subOpts)->wait();
-        // log.print_log("publisher2 connected");
+    while (!is_thread_stoped())
+    {
+        if (!cli.is_connected())
+        {
+            log.print_log("set connect options");
+            connOpts.set_keep_alive_interval(20);
+            connOpts.set_clean_session(false);
+            connOpts.set_connect_timeout(30);
+            connOpts.set_user_name("beyless");
+            connOpts.set_password("ws-beyless");
 
-    } catch (const mqtt::exception &exc) {
-        std::cerr << exc.what() << std::endl;
-    }
+            log.print_log("set event handler");
+            cli.set_connection_lost_handler([this](const std::string &) {
+                log.print_log("connection lost");
+            });
+            cli.set_connected_handler([this](const std::string &) {
+                log.print_log("connection ok");
+            });
+            cli.set_message_callback([this](mqtt::const_message_ptr msg) {
+                std::string json = std::string(msg->to_string());
+                rapidjson::Document d;
+                d.Parse(json.c_str());
+                std::string type = d["type"].GetString();
+                log.print_log("push received event :" + type);
+                std::pair<std::string, std::string> received_event(type, json);
+                received_events.push(received_event);
+                pthread_cond_signal(&cond);
+            });
+            log.print_log("connect client");
+            try{
+                auto tok = cli.connect(connOpts);
+                tok->wait();
 
-    cli.set_message_callback([this](mqtt::const_message_ptr msg) {
-        std::string json = std::string(msg->to_string());
-        rapidjson::Document d;
-        d.Parse(json.c_str());
-        std::string type = d["type"].GetString();
-        log.print_log("push received event :" + type);
-        std::pair<std::string, std::string> received_event (type,json);
-        received_events.push(received_event);
-        pthread_cond_signal(&cond);
-    });
-
-    try {
-        auto subOpts = mqtt::subscribe_options(NO_LOCAL);
-        std::vector<mqtt::topic>::iterator iter;
-        for(iter = subjects.begin(); iter != subjects.end(); iter++){
-            iter->subscribe(subOpts)->wait();
+                auto subOpts = mqtt::subscribe_options(false);
+                std::vector<mqtt::topic>::iterator iter;
+                log.print_log("subscribe topics");
+                for (iter = subjects.begin(); iter != subjects.end(); iter++){
+                    iter->subscribe(subOpts)->wait();
+                }
+            }catch (const mqtt::exception &exc){
+                std::string err = exc.what();
+                log.print_log("connect error : " + err);
+                log.print_log("retry to connect after timeout");
+                //continue;
+            }
         }
-        log.print_log("all subscriber connected");
-        // sub1.subscribe(subOpts)->wait();
-        // log.print_log("subscriber1 connected");
-        // sub2.subscribe(subOpts)->wait();
-        // log.print_log("subscriber2 connected");
-        // sub3.subscribe(subOpts)->wait();
-        // log.print_log("subscriber3 connected");
 
-    } catch (const mqtt::exception &exc) {
-        std::cerr << exc.what() << std::endl;
+        struct timeval curtime;
+        struct timespec timeout;
+        gettimeofday(&curtime, NULL);
+        timeout.tv_sec = curtime.tv_sec + CONNECT_CHECK_TIME_SEC; //set check interval
+        timeout.tv_nsec = curtime.tv_usec * 1000;
+        pthread_mutex_lock(&mqtt_connect_mutex_);
+        if (pthread_cond_timedwait(&mqtt_connect_cond_, &mqtt_connect_mutex_, &timeout) == ETIMEDOUT){
+            // wait for CONNECT_CHECK_TIME_SEC
+            pthread_mutex_unlock(&mqtt_connect_mutex_);
+            continue;
+        }else{
+            log.print_log("received terminate thread event!");
+            pthread_mutex_unlock(&mqtt_connect_mutex_);
+            break;
+        }
     }
+    log.print_log("terminate mqtt_connect_thread");
 }
 
 // initialize MYSQL database (require auto reconnect )
@@ -354,18 +373,18 @@ int64_t terminal::database_upload(cv::Mat iter, std::string env_id, std::string 
     return mysql_insert_id(conn);
 }
 
-void terminal::start_daemon() {
-    std::thread t0(&terminal::callback_rpc, this);
+void terminal::create_mqtt_message_thread() {
+    std::thread t0(&terminal::mqtt_message_thread, this);
     t0.detach();
 
     //update_device_info();
 }
 
-void terminal::callback_rpc() {
+void terminal::mqtt_message_thread() {
     std::string res_form;
     std::string event;
     std::string event_payload;
-    while(!is_daemon_stoped())
+    while(!is_thread_stoped())
     {
         pthread_mutex_lock(&mutex);
         pthread_cond_wait(&cond,&mutex);
@@ -427,8 +446,6 @@ bool terminal::operate_camera_module_set(std::string event_payload){
 }
 
 bool terminal::operate_camera_module_get(std::string event_payload){
-    // rapidjson::Document json_data;
-    // json_data.Parse(event_payload.c_str());
     std::string res_form;
     // TODO: module 정보 가져가는 부분 구현 필요
     if(true){
@@ -691,12 +708,13 @@ FUNC_END:
 //     system("");
 // }
 
-void terminal::stop_daemon(){
+void terminal::stop_thread(){
     terminate_program = true;
     pthread_cond_signal(&cond);    
+    pthread_cond_signal(&mqtt_connect_cond_);    
 }
 
-bool terminal::is_daemon_stoped(){
+bool terminal::is_thread_stoped(){
     return terminate_program;
 }
 

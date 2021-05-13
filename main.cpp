@@ -36,14 +36,6 @@ int main(int argc, char** argv) {
     VendorStorage vendor_info;
 
     if (argc < 3){
-        // vendor_info.SetSerialNumber(argv[1]);
-        // vendor_info.SetBrokerIP(argv[2]);
-        // vendor_info.ParseDeviceInfo();
-        // device_id = vendor_info.GetDeviceID();
-        // broker_ip = vendor_info.GetBrokerIP();
-        // //std::cout << "not enough user argument"<< std::endl;
-        // std::cout << "read device id from serial number : " << device_id << std::endl;
-        // std::cout << "read broker ip from saved info : " << broker_ip << std::endl;
         std::cout << "not enough user argument"<< std::endl;
         exit(1);
     }else{
@@ -61,18 +53,18 @@ int main(int argc, char** argv) {
                vendor_info.GetSerialNumber(),
                get_project_version()
     );
-    T.initialize_mqtt_client();
+    T.create_mqtt_connect_thread();
 #ifndef DEBUG_BAIVE    
     if(!T.initialize_MySQL_connector()){
         std::cout << "Can't initialize mysql, it is only for test" << std::endl;
     }
 #endif
 
-    T.start_daemon();
+    T.create_mqtt_message_thread();
     std::cout << "Start Baive Terminal Program..." << std::endl;
     std::cout << "press 'q' to exit" << std::endl;
     while(std::tolower(std::cin.get()) != 'q');
-    T.stop_daemon();
+    T.stop_thread();
     std::cout << "Exit Baive Terminal Program..." << std::endl;
 
     return 0;
