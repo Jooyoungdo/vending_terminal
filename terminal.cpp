@@ -317,6 +317,9 @@ std::vector<std::string> terminal::init_json_member(std::string type){
         json_members.assign({"device_id", "request_id", "type", "file_type",
                              "file_url", "file_md5", "msg", "ret_code"});
     }
+    else if (type.compare("restart_resp") == 0){
+        json_members.assign({"device_id", "request_id", "type"});
+    }
     else{
         log.print_log("unknown type : "+ type);
         log.print_log("can't init json member, please contact develover(parand0320@beyless.com)");
