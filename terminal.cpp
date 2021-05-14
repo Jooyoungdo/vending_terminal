@@ -1,4 +1,5 @@
 #include "terminal.h"
+
 //#define TEST_DOWNLOAD
 // terminal class initializer which initialize all inherited classes
 
@@ -411,7 +412,8 @@ void terminal::mqtt_message_thread() {
                 operate_goodbye(event_payload);
             }else if (event == MQTT_MESSAGE_TYPE_DEVICE_FILE_DOWNLOAD){
                 operate_device_file_download(event_payload);
-            }else if (event == MQTT_MESSAGE_TYPE_TERMINATE){
+            }else if (event == MQTT_MESSAGE_TYPE_RESTART){
+                operate_reboot_device(event_payload);
                 //pthread_mutex_unlock(&mutex);
                 break;
             }else if (event != "NONE"){
@@ -619,6 +621,33 @@ bool terminal::operate_device_file_download(std::string event_payload){
         res_form = create_response_form(event_payload, "file_download_resp", "download fail", false);
     mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_REMOTE);
     
+    return true;
+}
+
+void terminal::operate_reboot_device(std::string event_payload){
+    std::string res_form;
+
+    log.print_log("reboot device");
+    if(check_device_state()){
+        res_form = create_response_form(event_payload, "restart_resp", "restart success", true);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_REMOTE);
+        sync();
+        reboot(RB_AUTOBOOT);
+    }else{
+        res_form = create_response_form(event_payload, "restart_resp", "restart success", false);
+        mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_REMOTE);
+    }
+    
+}
+
+
+bool terminal::check_device_state(){
+    
+    // check door state
+    if(!doorLock::is_ready()){
+        return false;
+    }
+    // TODO: check other things?
     return true;
 }
 

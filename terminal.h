@@ -32,6 +32,9 @@
 #include <openssl/md5.h>
 #include <unistd.h>
 
+#include <unistd.h>
+#include <sys/reboot.h>
+
 #define DAEMON_PROCESS_TERMINAL_H
 
 class terminal : public camera, public doorLock
@@ -53,7 +56,7 @@ private:
     const std::string MQTT_CLIENT_TOPIC_DEVICE_OPERATION = "device_operation";
     const std::string MQTT_CLIENT_TOPIC_DEVICE_UPDATE = "device_update";
     const std::string MQTT_CLIENT_TOPIC_DEVICE_INFO = "device_info";
-    const std::string MQTT_CLIENT_TOPIC_DEVICE_REMOTE = "device_REMOTE";
+    const std::string MQTT_CLIENT_TOPIC_DEVICE_REMOTE = "device_remote";
 
     const std::string MQTT_SERVER_TOPIC_DEVICE_PREFIX = "DEVICE_";
     const std::string MQTT_SERVER_TOPIC_UPDATER_PREFIX = "UPDATER_";
@@ -67,7 +70,7 @@ private:
     const std::string MQTT_MESSAGE_TYPE_CAMERA_MODULE_GET = "camera_module_get";
     const std::string MQTT_MESSAGE_TYPE_CUSTOMER_ATTRIBUTE = "customer_attribute";
     const std::string MQTT_MESSAGE_TYPE_GOODBYE = "goodbye_data";
-    const std::string MQTT_MESSAGE_TYPE_TERMINATE = "terminate";
+    const std::string MQTT_MESSAGE_TYPE_RESTART = "restart";
     const std::string MQTT_MESSAGE_TYPE_SET_SOUND = "set_sound";
     const std::string MQTT_MESSAGE_TYPE_DEVICE_FILE_DOWNLOAD = "file_download";
 
@@ -281,6 +284,11 @@ public:
     bool operate_device_file_download(std::string event_payload);
 
     /**
+     * @brief reboot device
+     * 
+     */
+    void operate_reboot_device(std::string event_payload);
+    /**
      * @brief : open and close door 
      * open door -> wait open -> close door -> wait close 
      * 
@@ -329,6 +337,15 @@ public:
      * 
      */
     void mqtt_connect_thread();
+
+    /**
+     * @brief check if device is ok to reboot
+     * 
+     * if door is open, device won't reboot
+     * @return true : device if ok
+     * @return false : device is not ready to reboot
+     */
+    bool check_device_state();
 };
 
 #endif //DAEMON_PROCESS_TERMINAL_H
