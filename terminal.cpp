@@ -318,7 +318,7 @@ std::vector<std::string> terminal::init_json_member(std::string type){
                              "file_url", "file_md5", "msg", "ret_code"});
     }
     else if (type.compare("restart_resp") == 0){
-        json_members.assign({"device_id", "request_id", "type"});
+        json_members.assign({"device_id", "request_id", "type","msg", "ret_code"});
     }
     else{
         log.print_log("unknown type : "+ type);
@@ -637,7 +637,7 @@ void terminal::operate_reboot_device(std::string event_payload){
         sync();
         reboot(RB_AUTOBOOT);
     }else{
-        res_form = create_response_form(event_payload, "restart_resp", "restart success", false);
+        res_form = create_response_form(event_payload, "restart_resp", "door is opend", false);
         mqtt_publish(res_form, MQTT_CLIENT_TOPIC_DEVICE_REMOTE);
     }
     
